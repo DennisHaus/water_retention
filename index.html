@@ -102,8 +102,7 @@
 
               PLY and STL exports use the same smoothed pond boundaries shown
               in the viewer. Flowlines are exported as OBJ. Exported geometry
-              uses physical model units and excludes visual vertical
-              exaggeration.
+              uses physical model units and excludes display exaggeration.
             </section>
 
           </div>
@@ -241,7 +240,7 @@
                   min="64"
                   max="320"
                   step="1"
-                  value="160"
+                  value="180"
                 >
               </div>
 
@@ -251,7 +250,7 @@
                 min="64"
                 max="320"
                 step="1"
-                value="160"
+                value="180"
               >
 
               <div class="control-note">
@@ -540,7 +539,7 @@
             </button>
 
             <div class="control-note">
-              Exports the same smoothed pond form visible in the viewer.
+              Exports the same smoothed pond volume represented in the viewer.
             </div>
 
           </div>
@@ -567,7 +566,7 @@
             </button>
 
             <div class="control-note">
-              The PNG captures the 3D viewer. The OBJ contains smooth
+              The PNG captures the WebGL viewer. The OBJ contains smooth,
               continuous-gradient flowlines.
             </div>
 
@@ -597,7 +596,7 @@
             id="newTerrainButton"
             type="button"
           >
-            NEW TERRAIN
+            NEW ALPINE TERRAIN
           </button>
 
           <button
@@ -700,9 +699,9 @@
 
 
       <div id="sourceHint">
-        Expected orientation: Y is vertical; X and Z are horizontal. Use the
-        scale controls when importing millimetre, centimetre or reduced-scale
-        models.
+        Expected orientation: Y is vertical; X and Z are horizontal.
+        Generated terrain uses an approximately 45° maximum slope.
+        Imported models require manual scale settings.
       </div>
 
 

@@ -54,48 +54,121 @@
           For visualisation, comparison and design exploration only.
         </p>
 
+        <p class="credit">
+          Developed by Dennis Häusler,
+          Institute for Landscape and Urban Studies,
+          ETH Zurich, 2026.
 
-        <details class="description-details">
-          <summary>MODEL DESCRIPTION</summary>
+          <br>
+
+          <a
+            href="mailto:haeusler@arch.ethz.ch"
+          >
+            haeusler@arch.ethz.ch
+          </a>
+
+          <br>
+
+          Assisted by AI (GPT-5.6).
+        </p>
+
+        <a
+          id="detailedDescriptionLink"
+          class="detailed-link"
+          href="#detailedDescription"
+          title="Open a detailed explanation of the simulator, its controls, assumptions and limitations."
+        >
+          DETAILED DESCRIPTION
+        </a>
+
+
+        <details
+          id="detailedDescription"
+          class="description-details"
+        >
+          <summary
+            title="Detailed explanation of all simulator functions, controls, calculations and exports."
+          >
+            MODEL DESCRIPTION
+          </summary>
 
           <div class="description-content">
 
             <section>
               <strong>RAINFALL</strong>
 
-              Rainfall is applied uniformly over the entire projected
-              topographic area. One litre per square metre equals one
-              millimetre of rainfall.
+              Rainfall is applied uniformly over the complete projected
+              topographic area. The input uses litres per square metre,
+              equivalent to millimetres of rainfall. One L/m² equals one mm.
             </section>
 
             <section>
-              <strong>SURFACE FLOW</strong>
+              <strong>RETENTION BASINS</strong>
 
-              Flowlines follow an interpolated downhill terrain gradient.
-              Their geometry is simplified and smoothed for visual clarity.
-              Flowlines stop when they would loop back across themselves.
+              Depressions are identified from the terrain drainage network.
+              Basins smaller than 5% of the capacity of the largest basin are
+              neglected in the retention calculation. Rainfall entering the
+              retained basins is filled up to their spill elevation.
             </section>
 
             <section>
-              <strong>RETENTION</strong>
+              <strong>SPILL AND RUNOFF</strong>
 
-              Rainfall entering a depression is retained until it reaches its
-              spill elevation. Excess water is passed to a downstream basin or
-              counted as runoff.
+              When a basin reaches its spill elevation, excess water is routed
+              to the next significant downstream basin where possible.
+              Remaining water is counted as runoff or spill through the open
+              terrain boundary.
             </section>
 
             <section>
-              <strong>TOPOGRAPHY</strong>
+              <strong>WATER GEOMETRY</strong>
 
-              PLY, STL and OBJ models are sampled into a regular heightfield.
-              Each horizontal cell has one terrain elevation.
+              Retained-water geometry follows the sampled terrain cells.
+              Each wet cell is clipped against the water level, so the water
+              volume follows sloping terrain edges rather than being a simple
+              vertical extrusion.
             </section>
 
             <section>
-              <strong>ANALYSIS LAYERS</strong>
+              <strong>FLOWLINES</strong>
 
-              Optional layers show approximate slope orientation, slope
-              steepness and watershed catchments.
+              Flowlines follow a continuously interpolated downhill gradient.
+              They are deliberately simplified visual paths. Flowlines are
+              smoothed, extended across the terrain where possible and stopped
+              if they approach a retained basin or would cross themselves.
+            </section>
+
+            <section>
+              <strong>SLOPE ORIENTATION</strong>
+
+              The slope-orientation layer displays arrows pointing in the
+              approximate downhill direction of the terrain surface.
+            </section>
+
+            <section>
+              <strong>SLOPE STEEPNESS</strong>
+
+              The slope-steepness layer uses a colour gradient from blue for
+              low slopes to red for steep slopes. The legend uses a range of
+              0° to 45° or more.
+            </section>
+
+            <section>
+              <strong>WATERSHEDS</strong>
+
+              The watershed layer shows the drainage catchments associated with
+              the significant basins. Their boundaries are interpolated over
+              three neighbouring points to reduce the appearance of the
+              underlying raster structure.
+            </section>
+
+            <section>
+              <strong>MODEL SCALE</strong>
+
+              Imported PLY, STL and OBJ files do not reliably contain unit
+              metadata. Set model scale and metres per model unit manually.
+              The importer assumes Y is elevation and X/Z form the horizontal
+              plane.
             </section>
 
             <section>
@@ -103,15 +176,17 @@
 
               This is not an engineering flood model. It does not calculate
               infiltration, evaporation, groundwater, soil permeability,
-              drainage infrastructure, sediment transport or flow velocity.
+              drainage infrastructure, sediment transport, water velocity or
+              flood safety.
             </section>
 
             <section>
-              <strong>EXPORT</strong>
+              <strong>EXPORTS</strong>
 
-              Retained-water exports use the cell-based volumetric water form
-              represented in the viewer. Flowlines and analysis layers can
-              also be exported for comparison and further visualisation.
+              Water volumes can be exported as PLY or STL. Flowlines and slope
+              orientation can be exported as OBJ. Slope steepness and watershed
+              layers can be exported as coloured PLY files. Viewer images and
+              retention tables can also be downloaded.
             </section>
 
           </div>
@@ -131,13 +206,23 @@
       <section class="controls">
 
         <details open>
-          <summary>RAINFALL / RETENTION</summary>
+          <summary
+            title="Set rainfall depth, water transparency, flowline visibility and basin-label visibility."
+          >
+            RAINFALL / RETENTION
+          </summary>
 
           <div class="details-body">
 
-            <div class="control">
+            <div
+              class="control"
+              data-tooltip="Rainfall depth applied uniformly across the full projected terrain area."
+            >
               <div class="label-row">
-                <label for="rainfallPerM2">
+                <label
+                  for="rainfallPerM2"
+                  title="Uniform rainfall depth in litres per square metre, equivalent to millimetres."
+                >
                   RAINFALL L/m² / mm
                 </label>
 
@@ -149,6 +234,7 @@
                   max="1000"
                   step="1"
                   value="50"
+                  title="Enter rainfall in L/m² or equivalent mm."
                 >
               </div>
 
@@ -159,17 +245,24 @@
                 max="1000"
                 step="1"
                 value="50"
+                title="Adjust rainfall depth."
               >
 
               <div class="control-note">
-                1 L/m² = 1 mm rainfall over the full projected model area.
+                1 L/m² = 1 mm rainfall over the full projected area.
               </div>
             </div>
 
 
-            <div class="control">
+            <div
+              class="control"
+              data-tooltip="Adjust the transparency of retained-water geometry."
+            >
               <div class="label-row">
-                <label for="waterOpacity">
+                <label
+                  for="waterOpacity"
+                  title="Adjust retained-water opacity."
+                >
                   WATER OPACITY
                 </label>
 
@@ -181,6 +274,7 @@
                   max="1"
                   step="0.05"
                   value="0.68"
+                  title="Enter water opacity."
                 >
               </div>
 
@@ -191,13 +285,20 @@
                 max="1"
                 step="0.05"
                 value="0.68"
+                title="Adjust water opacity."
               >
             </div>
 
 
-            <div class="control">
+            <div
+              class="control"
+              data-tooltip="Toggle the static downhill flowline layer."
+            >
               <div class="label-row">
-                <label for="showFlow">
+                <label
+                  for="showFlow"
+                  title="Show or hide smooth static flowlines."
+                >
                   SHOW FLOW LINES
                 </label>
 
@@ -205,14 +306,21 @@
                   id="showFlow"
                   type="checkbox"
                   checked
+                  title="Toggle flowlines."
                 >
               </div>
             </div>
 
 
-            <div class="control">
+            <div
+              class="control"
+              data-tooltip="Toggle labels for all significant retained basins."
+            >
               <div class="label-row">
-                <label for="showWaterLabels">
+                <label
+                  for="showWaterLabels"
+                  title="Show or hide retained-basin labels."
+                >
                   SHOW BASIN LABELS
                 </label>
 
@@ -220,13 +328,13 @@
                   id="showWaterLabels"
                   type="checkbox"
                   checked
+                  title="Toggle basin labels."
                 >
               </div>
             </div>
 
-
             <div class="flow-legend">
-              BLUE = SURFACE FLOW · TAUBENBLAU = RETAINED WATER
+              BLUE = FLOW · TAUBENBLAU = RETAINED WATER
             </div>
 
           </div>
@@ -234,102 +342,110 @@
 
 
         <details>
-          <summary>ANALYSIS LAYERS</summary>
+          <summary
+            title="Toggle slope orientation, slope steepness and watershed analysis layers."
+          >
+            ANALYSIS LAYERS
+          </summary>
 
           <div class="details-body">
 
-            <div class="control">
+            <div
+              class="control"
+              data-tooltip="Display arrows indicating approximate downhill slope direction."
+            >
               <div class="label-row">
-                <label for="showSlopeOrientation">
+                <label
+                  for="showSlopeOrientation"
+                  title="Display downhill slope arrows."
+                >
                   SHOW SLOPE ORIENTATION
                 </label>
 
                 <input
                   id="showSlopeOrientation"
                   type="checkbox"
+                  title="Toggle slope orientation arrows."
                 >
               </div>
 
               <div class="control-note">
-                Arrows indicate the approximate downhill direction of the
-                terrain surface.
+                Arrows indicate approximate downhill direction.
               </div>
             </div>
 
 
-            <div class="control">
+            <div
+              class="control"
+              data-tooltip="Display a colour layer showing local slope steepness."
+            >
               <div class="label-row">
-                <label for="showSlopeSteepness">
+                <label
+                  for="showSlopeSteepness"
+                  title="Display the slope-steepness colour layer."
+                >
                   SHOW SLOPE STEEPNESS
                 </label>
 
                 <input
                   id="showSlopeSteepness"
                   type="checkbox"
+                  title="Toggle slope steepness."
                 >
               </div>
 
               <div class="control-note">
-                Shows an approximate slope-intensity layer based on local
-                terrain gradients.
+                Blue indicates low slopes; red indicates steep slopes.
               </div>
             </div>
 
 
-            <div class="control">
+            <div
+              class="control"
+              data-tooltip="Display significant drainage catchments and interpolated watershed borders."
+            >
               <div class="label-row">
-                <label for="showWatersheds">
+                <label
+                  for="showWatersheds"
+                  title="Display watershed catchments and borders."
+                >
                   SHOW WATERSHEDS
                 </label>
 
                 <input
                   id="showWatersheds"
                   type="checkbox"
+                  title="Toggle watersheds."
                 >
               </div>
 
               <div class="control-note">
-                Displays approximate catchment areas separated by local
-                drainage destinations.
+                Small basins below the 5% threshold are omitted.
               </div>
             </div>
-
-
-            <button
-              id="downloadSlopeOrientationButton"
-              type="button"
-            >
-              EXPORT SLOPE ORIENTATION
-            </button>
-
-
-            <button
-              id="downloadSlopeSteepnessButton"
-              type="button"
-            >
-              EXPORT SLOPE STEEPNESS
-            </button>
-
-
-            <button
-              id="downloadWatershedsButton"
-              type="button"
-            >
-              EXPORT WATERSHEDS
-            </button>
 
           </div>
         </details>
 
 
         <details>
-          <summary>TERRAIN RESOLUTION</summary>
+          <summary
+            title="Change the resolution used for the sampled terrain heightfield."
+          >
+            TERRAIN RESOLUTION
+          </summary>
 
           <div class="details-body">
 
-            <div class="control">
+            <div
+              class="control"
+              data-tooltip="Higher resolution provides more terrain cells and more detailed analysis."
+            >
               <div class="label-row">
-                <label for="terrainResolution">
+                <label
+                  for="terrainResolution"
+                  title="Set terrain sampling resolution."
+                >
                   RESOLUTION
                 </label>
 
@@ -341,6 +457,7 @@
                   max="320"
                   step="1"
                   value="180"
+                  title="Enter terrain resolution."
                 >
               </div>
 
@@ -351,6 +468,7 @@
                 max="320"
                 step="1"
                 value="180"
+                title="Adjust terrain resolution."
               >
 
               <div class="control-note">
@@ -363,13 +481,23 @@
 
 
         <details>
-          <summary>MODEL SCALE / ORIENTATION</summary>
+          <summary
+            title="Set imported-model scale, display exaggeration, depth scale and rotation."
+          >
+            MODEL SCALE / ORIENTATION
+          </summary>
 
           <div class="details-body">
 
-            <div class="control">
+            <div
+              class="control"
+              data-tooltip="Real metres equal file coordinate multiplied by model scale and metres per model unit."
+            >
               <div class="label-row">
-                <label for="modelScale">
+                <label
+                  for="modelScale"
+                  title="Set the scale factor of the imported model."
+                >
                   MODEL SCALE ×
                 </label>
 
@@ -381,6 +509,7 @@
                   max="10000"
                   step="0.1"
                   value="1"
+                  title="Enter model scale."
                 >
               </div>
 
@@ -391,17 +520,20 @@
                 max="10000"
                 step="0.1"
                 value="1"
+                title="Adjust model scale."
               >
-
-              <div class="control-note">
-                Use 1:1, 1:1000 or 1:2500 workflows as appropriate.
-              </div>
             </div>
 
 
-            <div class="control">
+            <div
+              class="control"
+              data-tooltip="Specify how many real metres are represented by one file coordinate unit."
+            >
               <div class="label-row">
-                <label for="metersPerModelUnit">
+                <label
+                  for="metersPerModelUnit"
+                  title="Set metres represented by one model unit."
+                >
                   METRES / MODEL UNIT
                 </label>
 
@@ -413,6 +545,7 @@
                   max="100"
                   step="0.0001"
                   value="1"
+                  title="Enter metres per model unit."
                 >
               </div>
 
@@ -423,13 +556,20 @@
                 max="100"
                 step="0.0001"
                 value="1"
+                title="Adjust metres per model unit."
               >
             </div>
 
 
-            <div class="control">
+            <div
+              class="control"
+              data-tooltip="Display-only vertical exaggeration. It does not change volumes or analysis."
+            >
               <div class="label-row">
-                <label for="verticalExaggeration">
+                <label
+                  for="verticalExaggeration"
+                  title="Change vertical display exaggeration."
+                >
                   VERTICAL DISPLAY SCALE ×
                 </label>
 
@@ -441,6 +581,7 @@
                   max="10"
                   step="0.1"
                   value="1"
+                  title="Enter vertical exaggeration."
                 >
               </div>
 
@@ -451,18 +592,24 @@
                 max="10"
                 step="0.1"
                 value="1"
+                title="Adjust vertical exaggeration."
               >
 
               <div class="control-note">
-                Display only. Does not change calculated volumes or slope
-                analysis.
+                Display only. Does not change calculated volumes or slopes.
               </div>
             </div>
 
 
-            <div class="control">
+            <div
+              class="control"
+              data-tooltip="Stretch or compress the model along the Z axis."
+            >
               <div class="label-row">
-                <label for="depthScale">
+                <label
+                  for="depthScale"
+                  title="Change horizontal depth scale along Z."
+                >
                   Z AXIS SCALE ×
                 </label>
 
@@ -474,6 +621,7 @@
                   max="10"
                   step="0.1"
                   value="1"
+                  title="Enter Z-axis scale."
                 >
               </div>
 
@@ -484,13 +632,17 @@
                 max="10"
                 step="0.1"
                 value="1"
+                title="Adjust Z-axis scale."
               >
             </div>
 
 
             <div class="control">
               <div class="label-row">
-                <label for="rotationX">
+                <label
+                  for="rotationX"
+                  title="Rotate the imported model around the X axis."
+                >
                   ROTATE X °
                 </label>
 
@@ -502,6 +654,7 @@
                   max="180"
                   step="5"
                   value="0"
+                  title="Enter X rotation."
                 >
               </div>
 
@@ -512,13 +665,17 @@
                 max="180"
                 step="5"
                 value="0"
+                title="Adjust X rotation."
               >
             </div>
 
 
             <div class="control">
               <div class="label-row">
-                <label for="rotationY">
+                <label
+                  for="rotationY"
+                  title="Rotate the imported model around the Y axis."
+                >
                   ROTATE Y °
                 </label>
 
@@ -530,6 +687,7 @@
                   max="180"
                   step="5"
                   value="0"
+                  title="Enter Y rotation."
                 >
               </div>
 
@@ -540,13 +698,17 @@
                 max="180"
                 step="5"
                 value="0"
+                title="Adjust Y rotation."
               >
             </div>
 
 
             <div class="control">
               <div class="label-row">
-                <label for="rotationZ">
+                <label
+                  for="rotationZ"
+                  title="Rotate the imported model around the Z axis."
+                >
                   ROTATE Z °
                 </label>
 
@@ -558,6 +720,7 @@
                   max="180"
                   step="5"
                   value="0"
+                  title="Enter Z rotation."
                 >
               </div>
 
@@ -568,6 +731,7 @@
                 max="180"
                 step="5"
                 value="0"
+                title="Adjust Z rotation."
               >
             </div>
 
@@ -576,12 +740,19 @@
 
 
         <details>
-          <summary>DESIGN COMPARISON</summary>
+          <summary
+            title="Store and compare rainfall-retention results from different designs."
+          >
+            DESIGN COMPARISON
+          </summary>
 
           <div class="details-body">
 
             <div class="control">
-              <label for="designName">
+              <label
+                for="designName"
+                title="Name used when storing the current design."
+              >
                 DESIGN NAME
               </label>
 
@@ -590,12 +761,14 @@
                 class="text-input"
                 type="text"
                 value="Design 01"
+                title="Enter a design name."
               >
             </div>
 
             <button
               id="storeDesignButton"
               type="button"
+              title="Store the current terrain and rainfall result for comparison."
             >
               STORE CURRENT DESIGN
             </button>
@@ -603,15 +776,9 @@
             <button
               id="clearDesignsButton"
               type="button"
+              title="Remove all stored comparison designs."
             >
               CLEAR COMPARISON
-            </button>
-
-            <button
-              id="downloadRetentionButton"
-              type="button"
-            >
-              DOWNLOAD RETENTION CSV
             </button>
 
             <div id="designComparisonTable">
@@ -624,56 +791,82 @@
         </details>
 
 
-        <details>
-          <summary>EXPORT RETAINED WATER</summary>
+        <details id="exportMenu">
+          <summary
+            title="Download water volumes, analysis layers, flowlines, viewer images and retention tables."
+          >
+            EXPORT
+          </summary>
 
           <div class="details-body">
 
             <button
               id="downloadWaterPlyButton"
               type="button"
+              title="Download terrain-following retained-water geometry as PLY."
             >
-              DOWNLOAD WATER VOLUME PLY
+              WATER VOLUME PLY
             </button>
 
             <button
               id="downloadWaterStlButton"
               type="button"
+              title="Download terrain-following retained-water geometry as binary STL."
             >
-              DOWNLOAD WATER VOLUME STL
-            </button>
-
-            <div class="control-note">
-              Exports the cell-based retained-water volume shown in the
-              viewer, including basin surfaces, side walls and closed bottoms.
-            </div>
-
-          </div>
-        </details>
-
-
-        <details>
-          <summary>EXPORT VIEWER / FLOW</summary>
-
-          <div class="details-body">
-
-            <button
-              id="downloadViewerPngButton"
-              type="button"
-            >
-              DOWNLOAD VIEWER PNG
+              WATER VOLUME STL
             </button>
 
             <button
               id="downloadFlowObjButton"
               type="button"
+              title="Download smooth static flowlines as OBJ."
             >
-              DOWNLOAD FLOW LINES OBJ
+              FLOW LINES OBJ
+            </button>
+
+            <button
+              id="downloadSlopeOrientationButton"
+              type="button"
+              title="Download slope-orientation arrows as OBJ line geometry."
+            >
+              SLOPE ORIENTATION OBJ
+            </button>
+
+            <button
+              id="downloadSlopeSteepnessButton"
+              type="button"
+              title="Download the coloured slope-steepness layer as PLY."
+            >
+              SLOPE STEEPNESS PLY
+            </button>
+
+            <button
+              id="downloadWatershedsButton"
+              type="button"
+              title="Download the coloured watershed layer as PLY."
+            >
+              WATERSHEDS PLY
+            </button>
+
+            <button
+              id="downloadViewerPngButton"
+              type="button"
+              title="Download a PNG image of the WebGL viewer."
+            >
+              VIEWER PNG
+            </button>
+
+            <button
+              id="downloadRetentionButton"
+              type="button"
+              title="Download rainfall, retained-water, runoff and basin results as CSV."
+            >
+              RETENTION CSV
             </button>
 
             <div class="control-note">
-              Flowlines use simplified, rounded paths and stop before
-              self-intersections.
+              Water PLY and STL exports use terrain-following clipped cells.
+              The PNG captures the WebGL viewer but not HTML labels.
             </div>
 
           </div>
@@ -684,6 +877,7 @@
           <button
             id="clearWaterButton"
             type="button"
+            title="Set rainfall to zero and remove retained water."
           >
             EMPTY WATER
           </button>
@@ -691,6 +885,7 @@
           <button
             id="resetViewButton"
             type="button"
+            title="Reset the camera to frame the terrain."
           >
             RESET CAMERA
           </button>
@@ -701,6 +896,7 @@
           <button
             id="newTerrainButton"
             type="button"
+            title="Generate a new alpine terrain with a new random seed."
           >
             NEW ALPINE TERRAIN
           </button>
@@ -708,6 +904,7 @@
           <button
             id="resetModelOrientationButton"
             type="button"
+            title="Reset imported-model rotations to zero."
           >
             RESET MODEL ROTATION
           </button>
@@ -716,8 +913,10 @@
       </section>
 
 
-      <section id="waterReadout" class="water-readout">
-
+      <section
+        id="waterReadout"
+        class="water-readout"
+      >
         <div class="readout-heading">
           CURRENT WATER BALANCE
         </div>
@@ -774,13 +973,13 @@
         <div id="basinReadout">
           No retained water.
         </div>
-
       </section>
 
 
       <div
         id="dropZone"
         tabindex="0"
+        title="Drop a PLY, STL or OBJ terrain model here."
       >
         DROP 3D TERRAIN HERE
 
@@ -802,6 +1001,7 @@
         id="chooseModelButton"
         class="file-button"
         type="button"
+        title="Choose a PLY, STL or OBJ terrain model."
       >
         CHOOSE 3D MODEL
       </button>
@@ -831,7 +1031,7 @@
 
   <script
     type="module"
-    src="./app.js?v=new"
+    src="./app.js"
   ></script>
 </body>
 </html>

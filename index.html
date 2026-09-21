@@ -49,18 +49,12 @@
           surface flow, runoff and water retention in depressions and behind
           artificial dams.
 
-          <br><br>
-
-          For visualisation, comparison and design exploration only.
-        </p>
+          <br>
 
         <p class="credit">
           Developed by Dennis Häusler,
           Institute for Landscape and Urban Studies,
           ETH Zurich, 2026.
-
-          <br>
-
           <a
             href="mailto:haeusler@arch.ethz.ch"
           >
@@ -71,6 +65,120 @@
 
           Assisted by AI (GPT-5.6).
         </p>
+
+
+
+
+        <details
+          id="detailedDescription"
+          class="description-details"
+        >
+          <summary
+            title="Detailed explanation of all simulator functions, controls, calculations and exports."
+          >
+            MODEL DESCRIPTION
+          </summary>
+
+          <div class="description-content">
+
+            <section>
+              <strong>RAINFALL</strong>
+
+              Rainfall is applied uniformly over the complete projected
+              topographic area. The input uses litres per square metre,
+              equivalent to millimetres of rainfall. One L/m² equals one mm.
+            </section>
+
+            <section>
+              <strong>RETENTION BASINS</strong>
+
+              Depressions are identified from the terrain drainage network.
+              Basins smaller than 5% of the capacity of the largest basin are
+              neglected in the retention calculation. Rainfall entering the
+              retained basins is filled up to their spill elevation.
+            </section>
+
+            <section>
+              <strong>SPILL AND RUNOFF</strong>
+
+              When a basin reaches its spill elevation, excess water is routed
+              to the next significant downstream basin where possible.
+              Remaining water is counted as runoff or spill through the open
+              terrain boundary.
+            </section>
+
+            <section>
+              <strong>WATER GEOMETRY</strong>
+
+              Retained-water geometry follows the sampled terrain cells.
+              Each wet cell is clipped against the water level, so the water
+              volume follows sloping terrain edges rather than being a simple
+              vertical extrusion.
+            </section>
+
+            <section>
+              <strong>FLOWLINES</strong>
+
+              Flowlines follow a continuously interpolated downhill gradient.
+              They are deliberately simplified visual paths. Flowlines are
+              smoothed, extended across the terrain where possible and stopped
+              if they approach a retained basin or would cross themselves.
+            </section>
+
+            <section>
+              <strong>SLOPE ORIENTATION</strong>
+
+              The slope-orientation layer displays arrows pointing in the
+              approximate downhill direction of the terrain surface.
+            </section>
+
+            <section>
+              <strong>SLOPE STEEPNESS</strong>
+
+              The slope-steepness layer uses a colour gradient from blue for
+              low slopes to red for steep slopes. The legend uses a range of
+              0° to 45° or more.
+            </section>
+
+            <section>
+              <strong>WATERSHEDS</strong>
+
+              The watershed layer shows the drainage catchments associated with
+              the significant basins. Their boundaries are interpolated over
+              three neighbouring points to reduce the appearance of the
+              underlying raster structure.
+            </section>
+
+            <section>
+              <strong>MODEL SCALE</strong>
+
+              Imported PLY, STL and OBJ files do not reliably contain unit
+              metadata. Set model scale and metres per model unit manually.
+              The importer assumes Y is elevation and X/Z form the horizontal
+              plane.
+            </section>
+
+            <section>
+              <strong>LIMITATIONS</strong>
+
+              This is not an engineering flood model. It does not calculate
+              infiltration, evaporation, groundwater, soil permeability,
+              drainage infrastructure, sediment transport, water velocity or
+              flood safety.
+            </section>
+
+            <section>
+              <strong>EXPORTS</strong>
+
+              Water volumes can be exported as PLY or STL. Flowlines and slope
+              orientation can be exported as OBJ. Slope steepness and watershed
+              layers can be exported as coloured PLY files. Viewer images and
+              retention tables can also be downloaded.
+            </section>
+
+          </div>
+        </details>
+
 
         <div class="current-terrain">
           <span>TOPOGRAPHY</span>

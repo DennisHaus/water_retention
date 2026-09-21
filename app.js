@@ -38,9 +38,7 @@ import {
    HELPERS
 ========================================================= */
 
-const $ = (
-  id
-) => {
+const $ = (id) => {
   return document.getElementById(id);
 };
 
@@ -60,26 +58,18 @@ const clamp = (
 };
 
 
-const numberValue = (
-  id
-) => {
+const numberValue = (id) => {
   const element =
     $(id);
 
-  if (
-    !element
-  ) {
+  if (!element) {
     return 0;
   }
 
   const value =
-    Number(
-      element.value
-    );
+    Number(element.value);
 
-  return Number.isFinite(
-    value
-  )
+  return Number.isFinite(value)
     ? value
     : 0;
 };
@@ -101,11 +91,8 @@ const formatNumber = (
   return Number(value).toLocaleString(
     "en-US",
     {
-      minimumFractionDigits:
-        decimals,
-
-      maximumFractionDigits:
-        decimals
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals
     }
   );
 };
@@ -114,17 +101,11 @@ const formatNumber = (
 const formatVolume = (
   volumeM3
 ) => {
-  if (
-    !Number.isFinite(
-      volumeM3
-    )
-  ) {
+  if (!Number.isFinite(volumeM3)) {
     return "0 L";
   }
 
-  if (
-    volumeM3 < 1
-  ) {
+  if (volumeM3 < 1) {
     return `${Math.round(
       volumeM3 * 1000
     ).toLocaleString(
@@ -139,55 +120,30 @@ const formatVolume = (
 };
 
 
-function setStatus(
-  message
-) {
+function setStatus(message) {
   const element =
     $("status");
 
-  if (
-    !element
-  ) {
+  if (!element) {
     return;
   }
 
   element.textContent =
-    String(
-      message
-    ).toUpperCase();
+    String(message).toUpperCase();
 }
 
 
-function escapeHtml(
-  value
-) {
+function escapeHtml(value) {
   return String(value)
-    .replace(
-      /&/g,
-      "&amp;"
-    )
-    .replace(
-      /</g,
-      "&lt;"
-    )
-    .replace(
-      />/g,
-      "&gt;"
-    )
-    .replace(
-      /"/g,
-      "&quot;"
-    )
-    .replace(
-      /'/g,
-      "&#039;"
-    );
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
 
-function csvEscape(
-  value
-) {
+function csvEscape(value) {
   const text =
     value === null ||
     value === undefined
@@ -209,31 +165,26 @@ function csvEscape(
 }
 
 
-function mulberry32(
-  seed
-) {
+function mulberry32(seed) {
   let value =
     seed >>> 0;
 
   return function random() {
-    value +=
-      0x6D2B79F5;
+    value += 0x6D2B79F5;
 
     let result =
       value;
 
     result =
       Math.imul(
-        result ^
-          result >>> 15,
+        result ^ result >>> 15,
         result | 1
       );
 
     result ^=
       result +
       Math.imul(
-        result ^
-          result >>> 7,
+        result ^ result >>> 7,
         result | 61
       );
 
@@ -281,9 +232,7 @@ function onClick(
   const element =
     $(id);
 
-  if (
-    element
-  ) {
+  if (element) {
     element.addEventListener(
       "click",
       callback
@@ -299,9 +248,7 @@ function onChange(
   const element =
     $(id);
 
-  if (
-    element
-  ) {
+  if (element) {
     element.addEventListener(
       "change",
       callback
@@ -315,26 +262,26 @@ function disposeObjectResources(
 ) {
   object.traverse(
     (child) => {
-      if (
-        child.geometry
-      ) {
+      if (child.geometry) {
         child.geometry.dispose();
       }
 
-      if (
-        child.material
-      ) {
-        if (
-          Array.isArray(
-            child.material
-          )
-        ) {
+      if (child.material) {
+        if (Array.isArray(child.material)) {
           child.material.forEach(
             (material) => {
+              lineMaterials.delete(
+                material
+              );
+
               material.dispose();
             }
           );
         } else {
+          lineMaterials.delete(
+            child.material
+          );
+
           child.material.dispose();
         }
       }
@@ -346,9 +293,7 @@ function disposeObjectResources(
 function clearGroup(
   group
 ) {
-  if (
-    !group
-  ) {
+  if (!group) {
     return;
   }
 
@@ -404,7 +349,7 @@ const MAX_PROCEDURAL_SLOPE_RATIO =
   );
 
 const BASIN_SIGNIFICANCE_RATIO =
-  0.02;
+  0.05;
 
 
 /* =========================================================
@@ -413,36 +358,26 @@ const BASIN_SIGNIFICANCE_RATIO =
 
 class MinHeap {
   constructor() {
-    this.items =
-      [];
+    this.items = [];
   }
 
   get size() {
     return this.items.length;
   }
 
-  push(
-    item
-  ) {
+  push(item) {
     const array =
       this.items;
 
-    array.push(
-      item
-    );
+    array.push(item);
 
     let index =
       array.length - 1;
 
-    while (
-      index > 0
-    ) {
+    while (index > 0) {
       const parent =
         Math.floor(
-          (
-            index - 1
-          ) /
-          2
+          (index - 1) / 2
         );
 
       if (
@@ -467,10 +402,7 @@ class MinHeap {
     const array =
       this.items;
 
-    if (
-      array.length ===
-      0
-    ) {
+    if (array.length === 0) {
       return null;
     }
 
@@ -480,26 +412,18 @@ class MinHeap {
     const last =
       array.pop();
 
-    if (
-      array.length ===
-      0
-    ) {
+    if (array.length === 0) {
       return first;
     }
 
     let index =
       0;
 
-    while (
-      true
-    ) {
+    while (true) {
       const left =
         index * 2 + 1;
 
-      if (
-        left >=
-        array.length
-      ) {
+      if (left >= array.length) {
         break;
       }
 
@@ -510,8 +434,7 @@ class MinHeap {
         left;
 
       if (
-        right <
-          array.length &&
+        right < array.length &&
         array[right].level <
           array[left].level
       ) {
@@ -600,7 +523,7 @@ const lineMaterials =
 
 
 /* =========================================================
-   SCENE
+   SCENE INITIALISATION
 ========================================================= */
 
 function initializeScene() {
@@ -637,11 +560,8 @@ function initializeScene() {
 
   renderer =
     new THREE.WebGLRenderer({
-      antialias:
-        true,
-
-      preserveDrawingBuffer:
-        true
+      antialias: true,
+      preserveDrawingBuffer: true
     });
 
   renderer.setPixelRatio(
@@ -844,8 +764,7 @@ function resizeRenderer() {
     );
 
   camera.aspect =
-    width /
-    height;
+    width / height;
 
   camera.updateProjectionMatrix();
 
@@ -892,9 +811,7 @@ function createWideLine(
         point.clone()
     );
 
-  if (
-    closed
-  ) {
+  if (closed) {
     linePoints.push(
       linePoints[0].clone()
     );
@@ -924,13 +841,10 @@ function createWideLine(
     new LineMaterial({
       color,
       linewidth,
-      transparent:
-        true,
+      transparent: true,
       opacity,
-      depthTest:
-        false,
-      depthWrite:
-        false
+      depthTest: false,
+      depthWrite: false
     });
 
   material.resolution.set(
@@ -967,14 +881,14 @@ function createWideLine(
 
 
 /* =========================================================
-   CONTROLS
+   CONTROL BINDING
 ========================================================= */
 
 function bindPair(
   rangeId,
   numberId,
   callback,
-  rangeEvent
+  rangeEvent = "change"
 ) {
   const range =
     $(rangeId);
@@ -982,56 +896,36 @@ function bindPair(
   const number =
     $(numberId);
 
-  if (
-    !range ||
-    !number
-  ) {
+  if (!range || !number) {
     return;
   }
 
   const update =
     (rawValue) => {
       let value =
-        Number(
-          rawValue
-        );
+        Number(rawValue);
 
-      if (
-        !Number.isFinite(
-          value
-        )
-      ) {
+      if (!Number.isFinite(value)) {
         value =
-          Number(
-            range.value
-          );
+          Number(range.value);
       }
 
       value =
         clamp(
           value,
-          Number(
-            range.min
-          ),
-          Number(
-            range.max
-          )
+          Number(range.min),
+          Number(range.max)
         );
 
       range.value =
-        String(
-          value
-        );
+        String(value);
 
       number.value =
-        String(
-          value
-        );
+        String(value);
 
-      callback(
-        value
-      );
+      callback(value);
     };
+
 
   range.addEventListener(
     rangeEvent,
@@ -1042,6 +936,7 @@ function bindPair(
     }
   );
 
+
   number.addEventListener(
     "change",
     () => {
@@ -1051,13 +946,11 @@ function bindPair(
     }
   );
 
+
   number.addEventListener(
     "keydown",
     (event) => {
-      if (
-        event.key ===
-        "Enter"
-      ) {
+      if (event.key === "Enter") {
         update(
           number.value
         );
@@ -1080,22 +973,14 @@ function setPairValue(
   const number =
     $(numberId);
 
-  if (
-    range
-  ) {
+  if (range) {
     range.value =
-      String(
-        value
-      );
+      String(value);
   }
 
-  if (
-    number
-  ) {
+  if (number) {
     number.value =
-      String(
-        value
-      );
+      String(value);
   }
 }
 
@@ -1108,9 +993,7 @@ function bindControls() {
       displayedRainfall =
         value;
 
-      if (
-        terrainState
-      ) {
+      if (terrainState) {
         renderResult(
           calculateRetentionForRainfall(
             displayedRainfall
@@ -1156,6 +1039,7 @@ function bindControls() {
     "change"
   );
 
+
   bindPair(
     "metersPerModelUnit",
     "metersPerModelUnitNumber",
@@ -1163,12 +1047,14 @@ function bindControls() {
     "change"
   );
 
+
   bindPair(
     "depthScale",
     "depthScaleNumber",
     rebuildUploadedTerrainIfAvailable,
     "change"
   );
+
 
   bindPair(
     "verticalExaggeration",
@@ -1180,6 +1066,7 @@ function bindControls() {
     "input"
   );
 
+
   bindPair(
     "rotationX",
     "rotationXNumber",
@@ -1187,12 +1074,14 @@ function bindControls() {
     "change"
   );
 
+
   bindPair(
     "rotationY",
     "rotationYNumber",
     rebuildUploadedTerrainIfAvailable,
     "change"
   );
+
 
   bindPair(
     "rotationZ",
@@ -1207,12 +1096,11 @@ function bindControls() {
     updateFlowVisibility
   );
 
+
   onChange(
     "showWaterLabels",
     () => {
-      if (
-        currentResult
-      ) {
+      if (currentResult) {
         updateBasinLabels(
           currentResult
         );
@@ -1220,15 +1108,18 @@ function bindControls() {
     }
   );
 
+
   onChange(
     "showSlopeOrientation",
     updateAnalysisVisibility
   );
 
+
   onChange(
     "showSlopeSteepness",
     updateAnalysisVisibility
   );
+
 
   onChange(
     "showWatersheds",
@@ -1240,9 +1131,7 @@ function bindControls() {
     $("clearWaterButton") ||
     $("emptyWaterButton");
 
-  if (
-    clearWaterButton
-  ) {
+  if (clearWaterButton) {
     clearWaterButton.addEventListener(
       "click",
       () => {
@@ -1270,6 +1159,7 @@ function bindControls() {
     frameCamera
   );
 
+
   onClick(
     "newTerrainButton",
     () => {
@@ -1281,6 +1171,7 @@ function bindControls() {
       );
     }
   );
+
 
   onClick(
     "resetModelOrientationButton",
@@ -1307,10 +1198,12 @@ function bindControls() {
     }
   );
 
+
   onClick(
     "storeDesignButton",
     storeCurrentDesign
   );
+
 
   onClick(
     "clearDesignsButton",
@@ -1322,10 +1215,12 @@ function bindControls() {
     }
   );
 
+
   onClick(
     "downloadRetentionButton",
     downloadRetentionCsv
   );
+
 
   onClick(
     "downloadWaterPlyButton",
@@ -1336,6 +1231,7 @@ function bindControls() {
     }
   );
 
+
   onClick(
     "downloadWaterStlButton",
     () => {
@@ -1345,30 +1241,36 @@ function bindControls() {
     }
   );
 
+
   onClick(
     "downloadFlowObjButton",
     downloadFlowLinesObj
   );
+
 
   onClick(
     "downloadSlopeOrientationButton",
     downloadSlopeOrientation
   );
 
+
   onClick(
     "downloadSlopeSteepnessButton",
     downloadSlopeSteepness
   );
+
 
   onClick(
     "downloadWatershedsButton",
     downloadWatersheds
   );
 
+
   onClick(
     "downloadViewerPngButton",
     downloadViewerPng
   );
+
 
   onClick(
     "chooseModelButton",
@@ -1376,9 +1278,7 @@ function bindControls() {
       const input =
         $("modelFileInput");
 
-      if (
-        input
-      ) {
+      if (input) {
         input.click();
       }
     }
@@ -1388,22 +1288,19 @@ function bindControls() {
   const dropZone =
     $("dropZone");
 
-  if (
-    dropZone
-  ) {
+  if (dropZone) {
     dropZone.addEventListener(
       "click",
       () => {
         const input =
           $("modelFileInput");
 
-        if (
-          input
-        ) {
+        if (input) {
           input.click();
         }
       }
     );
+
 
     dropZone.addEventListener(
       "dragover",
@@ -1416,6 +1313,7 @@ function bindControls() {
       }
     );
 
+
     dropZone.addEventListener(
       "dragleave",
       () => {
@@ -1424,6 +1322,7 @@ function bindControls() {
         );
       }
     );
+
 
     dropZone.addEventListener(
       "drop",
@@ -1437,9 +1336,7 @@ function bindControls() {
         const file =
           event.dataTransfer.files[0];
 
-        if (
-          file
-        ) {
+        if (file) {
           await loadModelFile(
             file
           );
@@ -1452,18 +1349,14 @@ function bindControls() {
   const modelInput =
     $("modelFileInput");
 
-  if (
-    modelInput
-  ) {
+  if (modelInput) {
     modelInput.addEventListener(
       "change",
       async (event) => {
         const file =
           event.target.files[0];
 
-        if (
-          file
-        ) {
+        if (file) {
           await loadModelFile(
             file
           );
@@ -1478,7 +1371,7 @@ function bindControls() {
 
 
 /* =========================================================
-   LEGEND
+   STEEPNESS LEGEND
 ========================================================= */
 
 function createSteepnessLegend() {
@@ -1559,9 +1452,7 @@ function createSteepnessLegend() {
 
 
 function updateSteepnessLegend() {
-  if (
-    !steepnessLegendElement
-  ) {
+  if (!steepnessLegendElement) {
     return;
   }
 
@@ -1608,8 +1499,7 @@ function buildProceduralTerrain(
       proceduralSeed
     );
 
-  applyTerrainData(
-    terrain,
+  const terrainName =
     `GENERATED ALPINE ${
       proceduralSeed
         .toString(16)
@@ -1618,7 +1508,11 @@ function buildProceduralTerrain(
           "0"
         )
         .toUpperCase()
-    }`
+    }`;
+
+  applyTerrainData(
+    terrain,
+    terrainName
   );
 }
 
@@ -1633,13 +1527,11 @@ function gaussian2D(
     -0.5 *
     (
       Math.pow(
-        x /
-          radiusX,
+        x / radiusX,
         2
       ) +
       Math.pow(
-        z /
-          radiusZ,
+        z / radiusZ,
         2
       )
     )
@@ -1647,14 +1539,10 @@ function gaussian2D(
 }
 
 
-function ridgeNoise(
-  value
-) {
+function ridgeNoise(value) {
   return 1 -
     Math.abs(
-      Math.sin(
-        value
-      )
+      Math.sin(value)
     );
 }
 
@@ -1670,13 +1558,11 @@ function generateProceduralHeightfield(
 
   const widthM =
     1250 +
-    random() *
-      300;
+    random() * 300;
 
   const depthM =
     950 +
-    random() *
-      260;
+    random() * 260;
 
   const heights =
     new Float32Array(
@@ -1684,7 +1570,7 @@ function generateProceduralHeightfield(
       resolution
     );
 
-  const angle =
+  const valleyAngle =
     random() *
     Math.PI *
     2;
@@ -1708,86 +1594,66 @@ function generateProceduralHeightfield(
   const basins = [
     {
       x:
-        -widthM *
-          0.08 +
-        random() *
-          widthM *
-          0.16,
+        -widthM * 0.08 +
+        random() * widthM * 0.16,
 
       z:
-        -depthM *
-          0.08 +
-        random() *
-          depthM *
-          0.12,
+        -depthM * 0.08 +
+        random() * depthM * 0.12,
 
       radiusX:
         105 +
-        random() *
-          55,
+        random() * 55,
 
       radiusZ:
         115 +
-        random() *
-          60,
+        random() * 60,
 
       depth:
         45 +
-        random() *
-          45,
+        random() * 45,
 
       rim:
         22 +
-        random() *
-          18
+        random() * 18
     },
 
     {
       x:
-        widthM *
-          0.18 +
-        random() *
-          widthM *
-          0.08,
+        widthM * 0.18 +
+        random() * widthM * 0.08,
 
       z:
-        depthM *
-          0.08 +
-        random() *
-          depthM *
-          0.12,
+        depthM * 0.08 +
+        random() * depthM * 0.12,
 
       radiusX:
         95 +
-        random() *
-          60,
+        random() * 60,
 
       radiusZ:
         100 +
-        random() *
-          65,
+        random() * 65,
 
       depth:
         35 +
-        random() *
-          38,
+        random() * 38,
 
       rim:
         16 +
-        random() *
-          18
+        random() * 18
     }
   ];
 
 
   const cosine =
     Math.cos(
-      angle
+      valleyAngle
     );
 
   const sine =
     Math.sin(
-      angle
+      valleyAngle
     );
 
 
@@ -1828,30 +1694,20 @@ function generateProceduralHeightfield(
         2;
 
       const valleyX =
-        localX *
-          cosine +
-        localZ *
-          sine;
+        localX * cosine +
+        localZ * sine;
 
       const valleyZ =
-        -localX *
-          sine +
-        localZ *
-          cosine;
+        -localX * sine +
+        localZ * cosine;
 
-      const vx =
+      const normalizedX =
         valleyX /
-        (
-          widthM *
-          0.5
-        );
+        (widthM * 0.5);
 
-      const vz =
+      const normalizedZ =
         valleyZ /
-        (
-          depthM *
-          0.5
-        );
+        (depthM * 0.5);
 
 
       let height =
@@ -1860,7 +1716,7 @@ function generateProceduralHeightfield(
       height +=
         72 *
         (
-          vz + 1
+          normalizedZ + 1
         ) /
         2;
 
@@ -1868,7 +1724,7 @@ function generateProceduralHeightfield(
         120 *
         Math.pow(
           Math.abs(
-            vx
+            normalizedX
           ),
           1.72
         );
@@ -1877,7 +1733,7 @@ function generateProceduralHeightfield(
         30 *
         Math.pow(
           Math.abs(
-            vx
+            normalizedX
           ),
           4
         );
@@ -1887,9 +1743,8 @@ function generateProceduralHeightfield(
         Math.min(
           1,
           Math.abs(
-            vx
-          ) *
-          1.65
+            normalizedX
+          ) * 1.65
         );
 
       height +=
@@ -1897,50 +1752,41 @@ function generateProceduralHeightfield(
         (
           18 *
           ridgeNoise(
-            vz *
-              7.2 +
-            vx *
-              3.1 +
+            normalizedZ * 7.2 +
+            normalizedX * 3.1 +
             phaseA
           ) +
 
           13 *
           ridgeNoise(
-            vz *
-              12.7 -
-            vx *
-              4.4 +
+            normalizedZ * 12.7 -
+            normalizedX * 4.4 +
             phaseB
           )
         );
 
+
       height +=
         14 *
         Math.sin(
-          vz *
-            6.2 +
-          vx *
-            2.4 +
+          normalizedZ * 6.2 +
+          normalizedX * 2.4 +
           phaseA
         );
 
       height +=
         10 *
         Math.cos(
-          vz *
-            11.5 -
-          vx *
-            4.7 +
+          normalizedZ * 11.5 -
+          normalizedX * 4.7 +
           phaseB
         );
 
       height +=
         6 *
         Math.sin(
-          vz *
-            22 +
-          vx *
-            9 +
+          normalizedZ * 22 +
+          normalizedX * 9 +
           phaseC
         );
 
@@ -1994,8 +1840,7 @@ function generateProceduralHeightfield(
       const moraineDistance =
         Math.abs(
           valleyZ +
-          depthM *
-            0.12
+          depthM * 0.12
         );
 
       const moraineExtent =
@@ -2005,8 +1850,7 @@ function generateProceduralHeightfield(
           Math.pow(
             Math.abs(
               valleyX
-            ) /
-            430,
+            ) / 430,
             4
           )
         );
@@ -2015,8 +1859,7 @@ function generateProceduralHeightfield(
         55 *
         Math.exp(
           -Math.pow(
-            moraineDistance /
-              24,
+            moraineDistance / 24,
             2
           )
         ) *
@@ -2025,7 +1868,7 @@ function generateProceduralHeightfield(
 
       heights[
         z *
-          resolution +
+        resolution +
         x
       ] =
         height;
@@ -2110,7 +1953,7 @@ function enforceMaximumSlope(
       ) {
         const index =
           z *
-            resolution +
+          resolution +
           x;
 
         SLOPE_NEIGHBOURS.forEach(
@@ -2132,15 +1975,13 @@ function enforceMaximumSlope(
 
             const nextIndex =
               nextZ *
-                resolution +
+              resolution +
               nextX;
 
             const horizontalDistance =
               Math.hypot(
-                dx *
-                  cellWidthM,
-                dz *
-                  cellDepthM
+                dx * cellWidthM,
+                dz * cellDepthM
               );
 
             const maximumDifference =
@@ -2152,9 +1993,7 @@ function enforceMaximumSlope(
               heights[nextIndex];
 
             if (
-              Math.abs(
-                difference
-              ) <=
+              Math.abs(difference) <=
               maximumDifference
             ) {
               return;
@@ -2162,16 +2001,11 @@ function enforceMaximumSlope(
 
             const adjustment =
               (
-                Math.abs(
-                  difference
-                ) -
+                Math.abs(difference) -
                 maximumDifference
-              ) *
-              0.5;
+              ) * 0.5;
 
-            if (
-              difference > 0
-            ) {
+            if (difference > 0) {
               heights[index] -=
                 adjustment;
 
@@ -2192,9 +2026,7 @@ function enforceMaximumSlope(
       }
     }
 
-    if (
-      !changed
-    ) {
+    if (!changed) {
       break;
     }
   }
@@ -2258,14 +2090,9 @@ function transformRawTriangles(
         (point) => {
           const vector =
             new THREE.Vector3(
-              point[0] *
-                scale,
-
-              point[1] *
-                scale,
-
-              point[2] *
-                scale
+              point[0] * scale,
+              point[1] * scale,
+              point[2] * scale
             );
 
           vector.applyEuler(
@@ -2314,12 +2141,8 @@ function buildUploadedTerrain() {
       terrain,
       currentTerrainName
     );
-  } catch (
-    error
-  ) {
-    console.error(
-      error
-    );
+  } catch (error) {
+    console.error(error);
 
     setStatus(
       "MODEL ERROR"
@@ -2399,6 +2222,7 @@ function rasterizeTrianglesToHeightfield(
     );
   }
 
+
   const heights =
     new Float32Array(
       resolution *
@@ -2420,6 +2244,7 @@ function rasterizeTrianglesToHeightfield(
 
       const p2 =
         triangle[2];
+
 
       const u0 =
         (
@@ -2497,8 +2322,7 @@ function rasterizeTrianglesToHeightfield(
       if (
         Math.abs(
           denominator
-        ) <
-        1e-8
+        ) < 1e-8
       ) {
         return;
       }
@@ -2512,8 +2336,7 @@ function rasterizeTrianglesToHeightfield(
               u0,
               u1,
               u2
-            ) -
-            1
+            ) - 1
           )
         );
 
@@ -2525,8 +2348,7 @@ function rasterizeTrianglesToHeightfield(
               u0,
               u1,
               u2
-            ) +
-            1
+            ) + 1
           )
         );
 
@@ -2538,8 +2360,7 @@ function rasterizeTrianglesToHeightfield(
               v0,
               v1,
               v2
-            ) -
-            1
+            ) - 1
           )
         );
 
@@ -2551,8 +2372,7 @@ function rasterizeTrianglesToHeightfield(
               v0,
               v1,
               v2
-            ) +
-            1
+            ) + 1
           )
         );
 
@@ -2572,6 +2392,7 @@ function rasterizeTrianglesToHeightfield(
 
           const v =
             z + 0.5;
+
 
           const a =
             (
@@ -2630,7 +2451,7 @@ function rasterizeTrianglesToHeightfield(
 
           const index =
             z *
-              resolution +
+            resolution +
             x;
 
           const height =
@@ -2668,12 +2489,14 @@ function rasterizeTrianglesToHeightfield(
     }
   );
 
-  heights.forEach(
-    (_, index) => {
-      heights[index] -=
-        minimumHeight;
-    }
-  );
+  for (
+    let index = 0;
+    index < heights.length;
+    index++
+  ) {
+    heights[index] -=
+      minimumHeight;
+  }
 
 
   return {
@@ -2731,6 +2554,7 @@ function fillMissingHeightCells(
         resolution
       );
 
+
     NEIGHBOURS.forEach(
       ([dx, dz]) => {
         const nextX =
@@ -2750,7 +2574,7 @@ function fillMissingHeightCells(
 
         const nextIndex =
           nextZ *
-            resolution +
+          resolution +
           nextX;
 
         if (
@@ -2800,9 +2624,7 @@ function computeSpillLevels(
 
   const seedBoundary =
     (index) => {
-      if (
-        visited[index]
-      ) {
+      if (visited[index]) {
         return;
       }
 
@@ -2825,18 +2647,17 @@ function computeSpillLevels(
     x < resolution;
     x++
   ) {
-    seedBoundary(
-      x
-    );
+    seedBoundary(x);
 
     seedBoundary(
       (
         resolution - 1
       ) *
-        resolution +
+      resolution +
       x
     );
   }
+
 
   for (
     let z = 1;
@@ -2845,12 +2666,12 @@ function computeSpillLevels(
   ) {
     seedBoundary(
       z *
-        resolution
+      resolution
     );
 
     seedBoundary(
       z *
-        resolution +
+      resolution +
       resolution -
       1
     );
@@ -2873,6 +2694,7 @@ function computeSpillLevels(
         resolution
       );
 
+
     NEIGHBOURS.forEach(
       ([dx, dz]) => {
         const nextX =
@@ -2892,7 +2714,7 @@ function computeSpillLevels(
 
         const nextIndex =
           nextZ *
-            resolution +
+          resolution +
           nextX;
 
         if (
@@ -2961,7 +2783,7 @@ function computeFlowNetwork(
     ) {
       const index =
         z *
-          resolution +
+        resolution +
         x;
 
       const boundary =
@@ -2970,9 +2792,7 @@ function computeFlowNetwork(
         x === resolution - 1 ||
         z === resolution - 1;
 
-      if (
-        boundary
-      ) {
+      if (boundary) {
         continue;
       }
 
@@ -2993,7 +2813,7 @@ function computeFlowNetwork(
 
           const nextIndex =
             nextZ *
-              resolution +
+            resolution +
             nextX;
 
           const difference =
@@ -3053,9 +2873,7 @@ function computeFlowNetwork(
       const target =
         targets[index];
 
-      if (
-        target >= 0
-      ) {
+      if (target >= 0) {
         accumulation[target] +=
           accumulation[index];
       }
@@ -3101,7 +2919,7 @@ function computeFlowTerminals(
       ) {
         terminals[
           z *
-            resolution +
+          resolution +
           x
         ] =
           -1;
@@ -3150,9 +2968,7 @@ function computeFlowTerminals(
       const target =
         targets[current];
 
-      if (
-        target < 0
-      ) {
+      if (target < 0) {
         const x =
           current %
           resolution;
@@ -3185,10 +3001,7 @@ function computeFlowTerminals(
     let resolved =
       terminals[current];
 
-    if (
-      resolved ===
-      -2
-    ) {
+    if (resolved === -2) {
       resolved =
         current;
     }
@@ -3220,17 +3033,11 @@ function buildBasinDefinitions(
     const terminal =
       state.flowTerminals[index];
 
-    if (
-      terminal < 0
-    ) {
+    if (terminal < 0) {
       continue;
     }
 
-    if (
-      !groups.has(
-        terminal
-      )
-    ) {
+    if (!groups.has(terminal)) {
       groups.set(
         terminal,
         []
@@ -3281,6 +3088,7 @@ function buildBasinDefinitions(
               state.resolution
             );
 
+
           NEIGHBOURS.forEach(
             ([dx, dz]) => {
               const nextX =
@@ -3300,7 +3108,7 @@ function buildBasinDefinitions(
 
               const nextIndex =
                 nextZ *
-                  state.resolution +
+                state.resolution +
                 nextX;
 
               if (
@@ -3426,31 +3234,36 @@ function selectSignificantBasins(
     return [];
   }
 
-  const sizeOf =
+  const metric =
     (basin) => {
-      return Math.max(
-        basin.capacityM3,
-        basin.cells.length
-      );
+      if (
+        basin.capacityM3 > 0
+      ) {
+        return basin.capacityM3;
+      }
+
+      return basin.cells.length;
     };
 
-  const largest =
-    rawBasins.reduce(
-      (current, basin) =>
-        sizeOf(
-          basin
-        ) >
-        sizeOf(
-          current
-        )
-          ? basin
-          : current
-    );
+
+  let largest =
+    rawBasins[0];
+
+  rawBasins.forEach(
+    (basin) => {
+      if (
+        metric(basin) >
+        metric(largest)
+      ) {
+        largest =
+          basin;
+      }
+    }
+  );
+
 
   const largestSize =
-    sizeOf(
-      largest
-    );
+    metric(largest);
 
   const threshold =
     largestSize *
@@ -3459,11 +3272,10 @@ function selectSignificantBasins(
   const selected =
     rawBasins.filter(
       (basin) =>
-        sizeOf(
-          basin
-        ) >=
+        metric(basin) >=
         threshold
     );
+
 
   const rawBySink =
     new Map();
@@ -3477,6 +3289,7 @@ function selectSignificantBasins(
     }
   );
 
+
   const selectedBySink =
     new Map();
 
@@ -3484,9 +3297,7 @@ function selectSignificantBasins(
     (basin, index) => {
       basin.significanceRatio =
         largestSize > 0
-          ? sizeOf(
-              basin
-            ) /
+          ? metric(basin) /
             largestSize
           : 1;
 
@@ -3510,6 +3321,7 @@ function selectSignificantBasins(
 
       let destinationIndex =
         -1;
+
 
       while (
         cursor &&
@@ -3595,10 +3407,7 @@ function getBasinProcessingOrder(
 
   indegree.forEach(
     (value, index) => {
-      if (
-        value ===
-        0
-      ) {
+      if (value === 0) {
         queue.push(
           index
         );
@@ -3723,8 +3532,7 @@ function calculateBasinFillFromVolume(
       (
         low +
         high
-      ) /
-      2;
+      ) / 2;
 
     let volumeM3 =
       0;
@@ -3742,8 +3550,7 @@ function calculateBasinFillFromVolume(
     );
 
     if (
-      volumeM3 <
-      inflow
+      volumeM3 < inflow
     ) {
       low =
         middle;
@@ -3758,8 +3565,7 @@ function calculateBasinFillFromVolume(
     (
       low +
       high
-    ) /
-    2;
+    ) / 2;
 
   let retainedVolumeM3 =
     0;
@@ -3798,9 +3604,7 @@ function calculateBasinFillFromVolume(
 function calculateRetentionForRainfall(
   rainfallLPerM2
 ) {
-  if (
-    !terrainState
-  ) {
+  if (!terrainState) {
     return null;
   }
 
@@ -3811,8 +3615,7 @@ function calculateRetentionForRainfall(
     Math.max(
       0,
       rainfallLPerM2
-    ) /
-    1000;
+    ) / 1000;
 
   const totalRainfallM3 =
     rainfallDepthM *
@@ -3925,16 +3728,14 @@ function calculateRetentionForRainfall(
               x + 0.5
             ) *
             state.cellWidthM -
-            state.widthM /
-            2;
+            state.widthM / 2;
 
           const localZ =
             (
               z + 0.5
             ) *
             state.cellDepthM -
-            state.depthM /
-            2;
+            state.depthM / 2;
 
           const volumeM3 =
             depthM *
@@ -3947,8 +3748,7 @@ function calculateRetentionForRainfall(
           weightedY +=
             (
               state.heights[index] +
-              depthM /
-              2
+              depthM / 2
             ) *
             volumeM3;
 
@@ -4051,8 +3851,7 @@ function calculateRetentionForRainfall(
 
         if (
           destination >= 0 &&
-          destination <
-            incoming.length
+          destination < incoming.length
         ) {
           incoming[destination] +=
             fill.spillVolumeM3;
@@ -4212,26 +4011,48 @@ function applyTerrainData(
   };
 
 
+  let minimumHeight =
+    Infinity;
+
+  let maximumHeight =
+    -Infinity;
+
+  let maximumSpill =
+    -Infinity;
+
+
+  for (
+    let index = 0;
+    index < data.heights.length;
+    index++
+  ) {
+    minimumHeight =
+      Math.min(
+        minimumHeight,
+        data.heights[index]
+      );
+
+    maximumHeight =
+      Math.max(
+        maximumHeight,
+        data.heights[index]
+      );
+
+    maximumSpill =
+      Math.max(
+        maximumSpill,
+        spillLevels[index]
+      );
+  }
+
   state.minimumHeight =
-    Math.min(
-      ...Array.from(
-        data.heights
-      )
-    );
+    minimumHeight;
 
   state.maximumHeight =
-    Math.max(
-      ...Array.from(
-        data.heights
-      )
-    );
+    maximumHeight;
 
   state.maximumSpill =
-    Math.max(
-      ...Array.from(
-        spillLevels
-      )
-    );
+    maximumSpill;
 
 
   const rawBasins =
@@ -4288,13 +4109,11 @@ function applyTerrainData(
 
 
 /* =========================================================
-   TERRAIN MESH
+   TERRAIN DISPLAY
 ========================================================= */
 
 function rebuildTerrainMesh() {
-  if (
-    terrainMesh
-  ) {
+  if (terrainMesh) {
     world.remove(
       terrainMesh
     );
@@ -4329,25 +4148,23 @@ function rebuildTerrainMesh() {
     ) {
       const index =
         z *
-          state.resolution +
+        state.resolution +
         x;
 
       positions.push(
         (
           x + 0.5
         ) *
-          state.cellWidthM -
-          state.widthM /
-          2,
+        state.cellWidthM -
+        state.widthM / 2,
 
         state.heights[index],
 
         (
           z + 0.5
         ) *
-          state.cellDepthM -
-          state.depthM /
-          2
+        state.cellDepthM -
+        state.depthM / 2
       );
     }
   }
@@ -4365,7 +4182,7 @@ function rebuildTerrainMesh() {
     ) {
       const a =
         z *
-          state.resolution +
+        state.resolution +
         x;
 
       const b =
@@ -4434,7 +4251,7 @@ function rebuildTerrainMesh() {
 
 
 /* =========================================================
-   WATER GEOMETRY
+   TERRAIN-FOLLOWING WATER GEOMETRY
 ========================================================= */
 
 function ensureWaterMesh() {
@@ -4450,9 +4267,7 @@ function ensureWaterMesh() {
 
 
 function disposeWaterMesh() {
-  if (
-    !waterMesh
-  ) {
+  if (!waterMesh) {
     return;
   }
 
@@ -4472,17 +4287,13 @@ function disposeWaterMesh() {
 function updateWaterOpacity(
   value
 ) {
-  if (
-    !waterMesh
-  ) {
+  if (!waterMesh) {
     return;
   }
 
   waterMesh.traverse(
     (object) => {
-      if (
-        object.material
-      ) {
+      if (object.material) {
         object.material.opacity =
           value;
 
@@ -4503,29 +4314,16 @@ function addExportVertex(
     point
       .map(
         (value) =>
-          Number(
-            value
-          ).toFixed(
-            5
-          )
+          Number(value).toFixed(5)
       )
-      .join(
-        "|"
-      );
+      .join("|");
 
-  if (
-    vertexMap.has(
-      key
-    )
-  ) {
-    return vertexMap.get(
-      key
-    );
+  if (vertexMap.has(key)) {
+    return vertexMap.get(key);
   }
 
   const index =
-    vertices.length /
-    3;
+    vertices.length / 3;
 
   vertices.push(
     point[0],
@@ -4612,6 +4410,7 @@ function getTerrainCornerHeight(
   let count =
     0;
 
+
   for (
     let dz = -1;
     dz <= 0;
@@ -4623,12 +4422,10 @@ function getTerrainCornerHeight(
       dx++
     ) {
       const x =
-        cornerX +
-        dx;
+        cornerX + dx;
 
       const z =
-        cornerZ +
-        dz;
+        cornerZ + dz;
 
       if (
         x < 0 ||
@@ -4642,7 +4439,7 @@ function getTerrainCornerHeight(
       total +=
         state.heights[
           z *
-            state.resolution +
+          state.resolution +
           x
         ];
 
@@ -4651,8 +4448,7 @@ function getTerrainCornerHeight(
   }
 
   return count > 0
-    ? total /
-      count
+    ? total / count
     : state.minimumHeight;
 }
 
@@ -4664,31 +4460,27 @@ function getTerrainCellCorners(
 ) {
   const x0 =
     x *
-      state.cellWidthM -
-    state.widthM /
-      2;
+    state.cellWidthM -
+    state.widthM / 2;
 
   const x1 =
     (
       x + 1
     ) *
-      state.cellWidthM -
-    state.widthM /
-      2;
+    state.cellWidthM -
+    state.widthM / 2;
 
   const z0 =
     z *
-      state.cellDepthM -
-    state.depthM /
-      2;
+    state.cellDepthM -
+    state.depthM / 2;
 
   const z1 =
     (
       z + 1
     ) *
-      state.cellDepthM -
-    state.depthM /
-      2;
+    state.cellDepthM -
+    state.depthM / 2;
 
   return [
     {
@@ -4762,43 +4554,33 @@ function clipPolygonToWaterLevel(
       ];
 
     const aInside =
-      a.y <=
-      waterLevel;
+      a.y <= waterLevel;
 
     const bInside =
-      b.y <=
-      waterLevel;
+      b.y <= waterLevel;
+
 
     if (
       aInside &&
       bInside
     ) {
-      output.push(
-        {
-          x:
-            b.x,
-
-          y:
-            b.y,
-
-          z:
-            b.z
-        }
-      );
+      output.push({
+        x: b.x,
+        y: b.y,
+        z: b.z
+      });
 
       continue;
     }
 
 
     const denominator =
-      b.y -
-      a.y;
+      b.y - a.y;
 
     if (
       Math.abs(
         denominator
-      ) <
-      0.000001
+      ) < 0.000001
     ) {
       continue;
     }
@@ -4807,8 +4589,7 @@ function clipPolygonToWaterLevel(
       (
         waterLevel -
         a.y
-      ) /
-      denominator;
+      ) / denominator;
 
     const intersection = {
       x:
@@ -4849,18 +4630,11 @@ function clipPolygonToWaterLevel(
         intersection
       );
 
-      output.push(
-        {
-          x:
-            b.x,
-
-          y:
-            b.y,
-
-          z:
-            b.z
-        }
-      );
+      output.push({
+        x: b.x,
+        y: b.y,
+        z: b.z
+      });
     }
   }
 
@@ -4891,16 +4665,13 @@ function polygonArea(
       ];
 
     area +=
-      a.x *
-        b.z -
-      b.x *
-        a.z;
+      a.x * b.z -
+      b.x * a.z;
   }
 
   return Math.abs(
     area
-  ) *
-    0.5;
+  ) * 0.5;
 }
 
 
@@ -4965,11 +4736,9 @@ function addWaterCellGeometry(
 
   if (
     polygon.length < 3 ||
-    polygonArea(
-      polygon
-    ) <
-    state.cellAreaM2 *
-    0.00001
+    polygonArea(polygon) <
+      state.cellAreaM2 *
+      0.00001
   ) {
     return;
   }
@@ -4999,30 +4768,18 @@ function addWaterCellGeometry(
   ).forEach(
     (face) => {
       addExportTriangle(
-        top[
-          face[0]
-        ],
-        top[
-          face[1]
-        ],
-        top[
-          face[2]
-        ],
+        top[face[0]],
+        top[face[1]],
+        top[face[2]],
         vertices,
         triangles,
         vertexMap
       );
 
       addExportTriangle(
-        bottom[
-          face[2]
-        ],
-        bottom[
-          face[1]
-        ],
-        bottom[
-          face[0]
-        ],
+        bottom[face[2]],
+        bottom[face[1]],
+        bottom[face[0]],
         vertices,
         triangles,
         vertexMap
@@ -5094,33 +4851,27 @@ function addWaterCellGeometry(
     (edge) => {
       const neighbourIndex =
         edge.nz *
-          state.resolution +
+        state.resolution +
         edge.nx;
 
       const neighbourWet =
         edge.nx >= 0 &&
-        edge.nx <
-          state.resolution &&
+        edge.nx < state.resolution &&
         edge.nz >= 0 &&
-        edge.nz <
-          state.resolution &&
+        edge.nz < state.resolution &&
         wetSet.has(
           neighbourIndex
         );
 
-      if (
-        neighbourWet
-      ) {
+      if (neighbourWet) {
         return;
       }
 
       const aInside =
-        edge.a.y <=
-        waterLevel;
+        edge.a.y <= waterLevel;
 
       const bInside =
-        edge.b.y <=
-        waterLevel;
+        edge.b.y <= waterLevel;
 
       if (
         !aInside &&
@@ -5135,19 +4886,18 @@ function addWaterCellGeometry(
       let b =
         edge.b;
 
+
       if (
         aInside !==
         bInside
       ) {
         const denominator =
-          b.y -
-          a.y;
+          b.y - a.y;
 
         if (
           Math.abs(
             denominator
-          ) <
-          0.000001
+          ) < 0.000001
         ) {
           return;
         }
@@ -5156,8 +4906,7 @@ function addWaterCellGeometry(
           (
             waterLevel -
             a.y
-          ) /
-          denominator;
+          ) / denominator;
 
         const intersection = {
           x:
@@ -5180,22 +4929,15 @@ function addWaterCellGeometry(
             amount
         };
 
-        if (
-          aInside
-        ) {
-          a =
-            a;
-
+        if (aInside) {
           b =
             intersection;
         } else {
           a =
             intersection;
-
-          b =
-            b;
         }
       }
+
 
       addExportQuad(
         [
@@ -5246,9 +4988,7 @@ function buildVoxelWaterVolumeMesh(
 
   const basins =
     selectedBasin
-      ? [
-          selectedBasin
-        ]
+      ? [selectedBasin]
       : result.basins;
 
 
@@ -5295,11 +5035,9 @@ function buildVoxelWaterVolumeMesh(
 
           if (
             polygon.length >= 3 &&
-            polygonArea(
-              polygon
-            ) >
-            result.cellAreaM2 *
-            0.00001
+            polygonArea(polygon) >
+              result.cellAreaM2 *
+              0.00001
           ) {
             wetSet.add(
               index
@@ -5349,30 +5087,25 @@ function createGeometryFromExportMesh(
   const indices =
     [];
 
+
   mesh.triangles.forEach(
     (triangle) => {
       const base =
-        positions.length /
-        3;
+        positions.length / 3;
 
       triangle.forEach(
         (vertexIndex) => {
           positions.push(
             mesh.vertices[
-              vertexIndex *
-              3
+              vertexIndex * 3
             ],
 
             mesh.vertices[
-              vertexIndex *
-              3 +
-              1
+              vertexIndex * 3 + 1
             ],
 
             mesh.vertices[
-              vertexIndex *
-              3 +
-              2
+              vertexIndex * 3 + 2
             ]
           );
         }
@@ -5411,9 +5144,7 @@ function createGeometryFromExportMesh(
 function updateWaterVisualization(
   result
 ) {
-  if (
-    !waterMesh
-  ) {
+  if (!waterMesh) {
     return;
   }
 
@@ -5491,7 +5222,7 @@ function updateWaterVisualization(
 
 
 /* =========================================================
-   LABELS
+   LABELS AND READOUTS
 ========================================================= */
 
 function updateBasinLabels(
@@ -5528,8 +5259,7 @@ function updateBasinLabels(
       Math.min(
         result.cellWidthM,
         result.cellDepthM
-      ) *
-      0.2
+      ) * 0.2
     );
 
 
@@ -5568,8 +5298,7 @@ function updateBasinLabels(
 
       label.position.set(
         basin.x,
-        basin.waterLevel +
-          lift,
+        basin.waterLevel + lift,
         basin.z
       );
 
@@ -5595,8 +5324,7 @@ function updateReadouts(
       result.rainfallLPerM2,
       1
     )} / ${formatNumber(
-      result.rainfallDepthM *
-      1000,
+      result.rainfallDepthM * 1000,
       1
     )} mm`;
 
@@ -5706,9 +5434,7 @@ function updateTerrainName() {
 function renderResult(
   result
 ) {
-  if (
-    !result
-  ) {
+  if (!result) {
     return;
   }
 
@@ -5738,9 +5464,7 @@ function renderResult(
 ========================================================= */
 
 function updateVerticalDisplayScale() {
-  if (
-    world
-  ) {
+  if (world) {
     world.scale.y =
       numberValue(
         "verticalExaggeration"
@@ -5772,9 +5496,7 @@ function updateCameraTarget() {
 
 
 function frameCamera() {
-  if (
-    !terrainState
-  ) {
+  if (!terrainState) {
     return;
   }
 
@@ -5794,31 +5516,24 @@ function frameCamera() {
     verticalScale;
 
   camera.position.set(
-    horizontalSize *
-      0.9,
+    horizontalSize * 0.9,
 
     Math.max(
-      horizontalSize *
-        0.65,
-
-      visualHeight *
-        1.35
+      horizontalSize * 0.65,
+      visualHeight * 1.35
     ),
 
-    horizontalSize *
-      0.9
+    horizontalSize * 0.9
   );
 
   controls.target.set(
     0,
-    visualHeight *
-      0.22,
+    visualHeight * 0.22,
     0
   );
 
   controls.maxDistance =
-    horizontalSize *
-    8;
+    horizontalSize * 8;
 
   controls.update();
 }
@@ -5851,7 +5566,7 @@ function getCellGradient(
 
       return state.heights[
         safeZ *
-          state.resolution +
+        state.resolution +
         safeX
       ];
     };
@@ -5932,12 +5647,11 @@ function slopeColor(
 
   color.setHSL(
     0.64 -
-      clamp(
-        normalized,
-        0,
-        1
-      ) *
-      0.64,
+    clamp(
+      normalized,
+      0,
+      1
+    ) * 0.64,
 
     0.72,
 
@@ -5949,11 +5663,9 @@ function slopeColor(
 
 
 function watershedColor(
-  id
+  watershedId
 ) {
-  if (
-    id < 0
-  ) {
+  if (watershedId < 0) {
     return new THREE.Color(
       0x566166
     );
@@ -5964,10 +5676,9 @@ function watershedColor(
 
   color.setHSL(
     (
-      id *
+      watershedId *
       0.61803398875
-    ) %
-    1,
+    ) % 1,
 
     0.54,
 
@@ -5984,8 +5695,7 @@ function appendAnalysisQuad(
   color
 ) {
   const base =
-    data.positions.length /
-    3;
+    data.positions.length / 3;
 
   points.forEach(
     (point) => {
@@ -6009,18 +5719,15 @@ function appendAnalysisQuad(
 
       data.colors.push(
         Math.round(
-          color.r *
-          255
+          color.r * 255
         ),
 
         Math.round(
-          color.g *
-          255
+          color.g * 255
         ),
 
         Math.round(
-          color.b *
-          255
+          color.b * 255
         )
       );
     }
@@ -6080,31 +5787,15 @@ function createColorLayerMesh(
 
   const material =
     new THREE.MeshBasicMaterial({
-      vertexColors:
-        true,
-
-      transparent:
-        true,
-
+      vertexColors: true,
+      transparent: true,
       opacity,
-
-      depthTest:
-        false,
-
-      depthWrite:
-        false,
-
-      side:
-        THREE.DoubleSide,
-
-      polygonOffset:
-        true,
-
-      polygonOffsetFactor:
-        -2,
-
-      polygonOffsetUnits:
-        -2
+      depthTest: false,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      polygonOffset: true,
+      polygonOffsetFactor: -2,
+      polygonOffsetUnits: -2
     });
 
   const mesh =
@@ -6141,8 +5832,7 @@ function buildSlopeSteepnessLayer(
       Math.min(
         state.cellWidthM,
         state.cellDepthM
-      ) *
-      0.06
+      ) * 0.06
     );
 
 
@@ -6184,8 +5874,7 @@ function buildSlopeSteepnessLayer(
           (point) =>
             new THREE.Vector3(
               point.x,
-              point.y +
-                lift,
+              point.y + lift,
               point.z
             )
         ),
@@ -6230,8 +5919,7 @@ function buildWatershedLayer(
       Math.min(
         state.cellWidthM,
         state.cellDepthM
-      ) *
-      0.08
+      ) * 0.08
     );
 
 
@@ -6247,15 +5935,13 @@ function buildWatershedLayer(
     ) {
       const index =
         z *
-          state.resolution +
+        state.resolution +
         x;
 
       const terminal =
-        state.flowTerminals[
-          index
-        ];
+        state.flowTerminals[index];
 
-      const basinIndex =
+      const watershedId =
         terminalToBasin.has(
           terminal
         )
@@ -6277,13 +5963,12 @@ function buildWatershedLayer(
           (point) =>
             new THREE.Vector3(
               point.x,
-              point.y +
-                lift,
+              point.y + lift,
               point.z
             )
         ),
         watershedColor(
-          basinIndex
+          watershedId
         )
       );
     }
@@ -6306,8 +5991,7 @@ function buildSlopeOrientationLayer(
     Math.max(
       3,
       Math.floor(
-        state.resolution /
-        31
+        state.resolution / 31
       )
     );
 
@@ -6315,8 +5999,7 @@ function buildSlopeOrientationLayer(
     Math.max(
       state.cellWidthM,
       state.cellDepthM
-    ) *
-    1.45;
+    ) * 1.45;
 
 
   for (
@@ -6364,30 +6047,26 @@ function buildSlopeOrientationLayer(
           (
             corners[0].x +
             corners[2].x
-          ) /
-          2,
+          ) / 2,
 
           (
             corners[0].y +
             corners[1].y +
             corners[2].y +
             corners[3].y
-          ) /
-          4 +
+          ) / 4 +
           Math.max(
             0.8,
             Math.min(
               state.cellWidthM,
               state.cellDepthM
-            ) *
-            0.25
+            ) * 0.25
           ),
 
           (
             corners[0].z +
             corners[2].z
-          ) /
-          2
+          ) / 2
         );
 
       const arrow =
@@ -6396,11 +6075,8 @@ function buildSlopeOrientationLayer(
           origin,
           length,
           0xc7d49b,
-          length *
-          0.27,
-
-          length *
-          0.14
+          length * 0.27,
+          length * 0.14
         );
 
       arrow.renderOrder =
@@ -6437,6 +6113,7 @@ function buildSlopeOrientationLayer(
         arrow
       );
 
+
       const end =
         origin.clone().add(
           direction.clone().multiplyScalar(
@@ -6444,9 +6121,53 @@ function buildSlopeOrientationLayer(
           )
         );
 
+      const side =
+        new THREE.Vector3(
+          -direction.z,
+          0,
+          direction.x
+        );
+
+      const headLength =
+        length * 0.27;
+
+      const headWidth =
+        length * 0.14;
+
+      const headBase =
+        end.clone().sub(
+          direction.clone().multiplyScalar(
+            headLength
+          )
+        );
+
+      const headA =
+        headBase.clone().add(
+          side.clone().multiplyScalar(
+            headWidth
+          )
+        );
+
+      const headB =
+        headBase.clone().sub(
+          side.clone().multiplyScalar(
+            headWidth
+          )
+        );
+
       paths.push([
         origin,
         end
+      ]);
+
+      paths.push([
+        end,
+        headA
+      ]);
+
+      paths.push([
+        end,
+        headB
       ]);
     }
   }
@@ -6501,8 +6222,7 @@ function buildWatershedLoopsFromCells(
 
       const north =
         z > 0
-          ? index -
-            state.resolution
+          ? index - state.resolution
           : -1;
 
       const east =
@@ -6512,8 +6232,7 @@ function buildWatershedLoopsFromCells(
 
       const south =
         z < state.resolution - 1
-          ? index +
-            state.resolution
+          ? index + state.resolution
           : -1;
 
       const west =
@@ -6522,44 +6241,28 @@ function buildWatershedLoopsFromCells(
           : -1;
 
 
-      if (
-        !cellSet.has(
-          north
-        )
-      ) {
+      if (!cellSet.has(north)) {
         addEdge(
           [x, z],
           [x + 1, z]
         );
       }
 
-      if (
-        !cellSet.has(
-          east
-        )
-      ) {
+      if (!cellSet.has(east)) {
         addEdge(
           [x + 1, z],
           [x + 1, z + 1]
         );
       }
 
-      if (
-        !cellSet.has(
-          south
-        )
-      ) {
+      if (!cellSet.has(south)) {
         addEdge(
           [x + 1, z + 1],
           [x, z + 1]
         );
       }
 
-      if (
-        !cellSet.has(
-          west
-        )
-      ) {
+      if (!cellSet.has(west)) {
         addEdge(
           [x, z + 1],
           [x, z]
@@ -6580,11 +6283,7 @@ function buildWatershedLoopsFromCells(
           edge.a[1]
         );
 
-      if (
-        !outgoing.has(
-          key
-        )
-      ) {
+      if (!outgoing.has(key)) {
         outgoing.set(
           key,
           []
@@ -6609,15 +6308,11 @@ function buildWatershedLoopsFromCells(
     [];
 
 
-  while (
-    unused.size > 0
-  ) {
+  while (unused.size > 0) {
     const first =
       unused.values().next().value;
 
-    if (
-      !first
-    ) {
+    if (!first) {
       break;
     }
 
@@ -6638,12 +6333,8 @@ function buildWatershedLoopsFromCells(
 
     while (
       current &&
-      unused.has(
-        current
-      ) &&
-      safety <
-        edges.length +
-        10
+      unused.has(current) &&
+      safety < edges.length + 10
     ) {
       safety++;
 
@@ -6661,10 +6352,7 @@ function buildWatershedLoopsFromCells(
           current.b[1]
         );
 
-      if (
-        nextKey ===
-        start
-      ) {
+      if (nextKey === start) {
         break;
       }
 
@@ -6676,16 +6364,11 @@ function buildWatershedLoopsFromCells(
       current =
         nextEdges.find(
           (edge) =>
-            unused.has(
-              edge
-            )
-        ) ||
-        null;
+            unused.has(edge)
+        ) || null;
     }
 
-    if (
-      loop.length >= 3
-    ) {
+    if (loop.length >= 3) {
       loops.push(
         loop
       );
@@ -6707,8 +6390,8 @@ function smoothWatershedLoop(
 
 
   /*
-   * Three-point interpolation repeated
-   * three times.
+   * Three-point interpolation,
+   * repeated three times.
    */
   for (
     let pass = 0;
@@ -6777,8 +6460,7 @@ function smoothWatershedLoop(
   return curve.getPoints(
     Math.max(
       36,
-      current.length *
-      4
+      current.length * 4
     )
   );
 }
@@ -6799,8 +6481,7 @@ function buildWatershedBoundaryLines(
       Math.min(
         state.cellWidthM,
         state.cellDepthM
-      ) *
-      0.18
+      ) * 0.18
     );
 
 
@@ -6820,20 +6501,17 @@ function buildWatershedBoundaryLines(
                 new THREE.Vector3(
                   corner[0] *
                     state.cellWidthM -
-                    state.widthM /
-                    2,
+                    state.widthM / 2,
 
                   getTerrainCornerHeight(
                     state,
                     corner[0],
                     corner[1]
-                  ) +
-                    lift,
+                  ) + lift,
 
                   corner[1] *
                     state.cellDepthM -
-                    state.depthM /
-                    2
+                    state.depthM / 2
                 )
             );
 
@@ -6850,21 +6528,13 @@ function buildWatershedBoundaryLines(
                   }`
               )
               .sort()
-              .join(
-                "|"
-              );
+              .join("|");
 
-          if (
-            used.has(
-              key
-            )
-          ) {
+          if (used.has(key)) {
             return;
           }
 
-          used.add(
-            key
-          );
+          used.add(key);
 
           const smooth =
             smoothWatershedLoop(
@@ -6881,9 +6551,7 @@ function buildWatershedBoundaryLines(
               70
             );
 
-          if (
-            line
-          ) {
+          if (line) {
             group.add(
               line
             );
@@ -6972,9 +6640,7 @@ function buildAnalysisLayers() {
 
 
 function updateAnalysisVisibility() {
-  if (
-    !terrainState
-  ) {
+  if (!terrainState) {
     return;
   }
 
@@ -6998,7 +6664,7 @@ function updateAnalysisVisibility() {
 
 
 /* =========================================================
-   FLOWLINES
+   FLOWLINE SAFETY
 ========================================================= */
 
 function buildFlowBlockedCells(
@@ -7071,8 +6737,7 @@ function flowPointBlocked(
     Math.floor(
       (
         x +
-        state.widthM /
-        2
+        state.widthM / 2
       ) /
       state.cellWidthM
     );
@@ -7081,8 +6746,7 @@ function flowPointBlocked(
     Math.floor(
       (
         z +
-        state.depthM /
-        2
+        state.depthM / 2
       ) /
       state.cellDepthM
     );
@@ -7102,189 +6766,62 @@ function flowPointBlocked(
 }
 
 
-function sampleTerrainContinuous(
-  x,
-  z
+function distancePointToSegmentXZ(
+  point,
+  a,
+  b
 ) {
-  const state =
-    terrainState;
+  const abX =
+    b.x - a.x;
 
-  const gx =
-    (
-      x +
-      state.widthM /
-      2
-    ) /
-    state.cellWidthM -
-    0.5;
+  const abZ =
+    b.z - a.z;
 
-  const gz =
-    (
-      z +
-      state.depthM /
-      2
-    ) /
-    state.cellDepthM -
-    0.5;
+  const lengthSquared =
+    abX * abX +
+    abZ * abZ;
 
   if (
-    gx < 0 ||
-    gz < 0 ||
-    gx >
-      state.resolution - 1 ||
-    gz >
-      state.resolution - 1
+    lengthSquared <=
+    0.000001
   ) {
-    return null;
+    return Math.hypot(
+      point.x - a.x,
+      point.z - a.z
+    );
   }
 
+  const amount =
+    clamp(
+      (
+        (
+          point.x - a.x
+        ) *
+        abX +
 
-  const sample =
-    (sx, sz) => {
-      const safeX =
-        clamp(
-          sx,
-          0,
-          state.resolution - 1
-        );
+        (
+          point.z - a.z
+        ) *
+        abZ
+      ) /
+      lengthSquared,
 
-      const safeZ =
-        clamp(
-          sz,
-          0,
-          state.resolution - 1
-        );
-
-      const x0 =
-        Math.floor(
-          safeX
-        );
-
-      const z0 =
-        Math.floor(
-          safeZ
-        );
-
-      const x1 =
-        Math.min(
-          x0 + 1,
-          state.resolution - 1
-        );
-
-      const z1 =
-        Math.min(
-          z0 + 1,
-          state.resolution - 1
-        );
-
-      const fx =
-        safeX -
-        x0;
-
-      const fz =
-        safeZ -
-        z0;
-
-      const h00 =
-        state.heights[
-          z0 *
-            state.resolution +
-          x0
-        ];
-
-      const h10 =
-        state.heights[
-          z0 *
-            state.resolution +
-          x1
-        ];
-
-      const h01 =
-        state.heights[
-          z1 *
-            state.resolution +
-          x0
-        ];
-
-      const h11 =
-        state.heights[
-          z1 *
-            state.resolution +
-          x1
-        ];
-
-      return (
-        h00 *
-          (1 - fx) *
-          (1 - fz) +
-
-        h10 *
-          fx *
-          (1 - fz) +
-
-        h01 *
-          (1 - fx) *
-          fz +
-
-        h11 *
-          fx *
-          fz
-      );
-    };
-
-
-  const height =
-    sample(
-      gx,
-      gz
+      0,
+      1
     );
 
-  const distance =
-    0.45;
+  const closestX =
+    a.x +
+    abX * amount;
 
-  const gradientX =
-    (
-      sample(
-        gx +
-        distance,
-        gz
-      ) -
-      sample(
-        gx -
-        distance,
-        gz
-      )
-    ) /
-    (
-      2 *
-      distance *
-      state.cellWidthM
-    );
+  const closestZ =
+    a.z +
+    abZ * amount;
 
-  const gradientZ =
-    (
-      sample(
-        gx,
-        gz +
-        distance
-      ) -
-      sample(
-        gx,
-        gz -
-        distance
-      )
-    ) /
-    (
-      2 *
-      distance *
-      state.cellDepthM
-    );
-
-  return {
-    height,
-    gradientX,
-    gradientZ
-  };
+  return Math.hypot(
+    point.x - closestX,
+    point.z - closestZ
+  );
 }
 
 
@@ -7294,20 +6831,49 @@ function cross2D(
   c
 ) {
   return (
-    b.x -
-    a.x
+    b.x - a.x
   ) *
   (
-    c.z -
-    a.z
+    c.z - a.z
   ) -
   (
-    b.z -
-    a.z
+    b.z - a.z
   ) *
   (
-    c.x -
-    a.x
+    c.x - a.x
+  );
+}
+
+
+function pointOnSegment2D(
+  point,
+  a,
+  b
+) {
+  return (
+    point.x >=
+      Math.min(
+        a.x,
+        b.x
+      ) - 0.0001 &&
+
+    point.x <=
+      Math.max(
+        a.x,
+        b.x
+      ) + 0.0001 &&
+
+    point.z >=
+      Math.min(
+        a.z,
+        b.z
+      ) - 0.0001 &&
+
+    point.z <=
+      Math.max(
+        a.z,
+        b.z
+      ) + 0.0001
   );
 }
 
@@ -7346,24 +6912,72 @@ function segmentsIntersect2D(
       b
     );
 
+  const epsilon =
+    0.000001;
+
+
+  if (
+    Math.abs(abC) < epsilon &&
+    pointOnSegment2D(
+      c,
+      a,
+      b
+    )
+  ) {
+    return true;
+  }
+
+  if (
+    Math.abs(abD) < epsilon &&
+    pointOnSegment2D(
+      d,
+      a,
+      b
+    )
+  ) {
+    return true;
+  }
+
+  if (
+    Math.abs(cdA) < epsilon &&
+    pointOnSegment2D(
+      a,
+      c,
+      d
+    )
+  ) {
+    return true;
+  }
+
+  if (
+    Math.abs(cdB) < epsilon &&
+    pointOnSegment2D(
+      b,
+      c,
+      d
+    )
+  ) {
+    return true;
+  }
+
   const abOpposite =
     (
-      abC > 0 &&
-      abD < 0
+      abC > epsilon &&
+      abD < -epsilon
     ) ||
     (
-      abC < 0 &&
-      abD > 0
+      abC < -epsilon &&
+      abD > epsilon
     );
 
   const cdOpposite =
     (
-      cdA > 0 &&
-      cdB < 0
+      cdA > epsilon &&
+      cdB < -epsilon
     ) ||
     (
-      cdA < 0 &&
-      cdB > 0
+      cdA < -epsilon &&
+      cdB > epsilon
     );
 
   return (
@@ -7373,13 +6987,12 @@ function segmentsIntersect2D(
 }
 
 
-function pathSelfIntersects(
+function wouldRevisitOldFlowPath(
   points,
-  nextPoint
+  nextPoint,
+  minimumSeparation
 ) {
-  if (
-    points.length < 6
-  ) {
+  if (points.length < 6) {
     return false;
   }
 
@@ -7388,25 +7001,271 @@ function pathSelfIntersects(
       points.length - 1
     ];
 
+  const lastCheckedSegment =
+    points.length - 5;
+
+
   for (
     let index = 0;
-    index <
-      points.length - 5;
+    index < lastCheckedSegment;
     index++
   ) {
+    const a =
+      points[index];
+
+    const b =
+      points[index + 1];
+
+
     if (
       segmentsIntersect2D(
         last,
         nextPoint,
-        points[index],
-        points[index + 1]
+        a,
+        b
       )
+    ) {
+      return true;
+    }
+
+
+    const distance =
+      distancePointToSegmentXZ(
+        nextPoint,
+        a,
+        b
+      );
+
+    if (
+      distance < minimumSeparation
     ) {
       return true;
     }
   }
 
   return false;
+}
+
+
+function truncateFlowPathAtLoop(
+  points,
+  separationRatio = 0.32
+) {
+  if (
+    !terrainState ||
+    points.length < 6
+  ) {
+    return points;
+  }
+
+  const separation =
+    Math.min(
+      terrainState.cellWidthM,
+      terrainState.cellDepthM
+    ) *
+    separationRatio;
+
+  const safePoints =
+    [
+      points[0].clone()
+    ];
+
+
+  for (
+    let index = 1;
+    index < points.length;
+    index++
+  ) {
+    const nextPoint =
+      points[index];
+
+    if (
+      wouldRevisitOldFlowPath(
+        safePoints,
+        nextPoint,
+        separation
+      )
+    ) {
+      break;
+    }
+
+    safePoints.push(
+      nextPoint.clone()
+    );
+  }
+
+  return safePoints;
+}
+
+
+/* =========================================================
+   FLOWLINE INTEGRATION
+========================================================= */
+
+function sampleTerrainContinuous(
+  x,
+  z
+) {
+  const state =
+    terrainState;
+
+  const gridX =
+    (
+      x +
+      state.widthM / 2
+    ) /
+    state.cellWidthM -
+    0.5;
+
+  const gridZ =
+    (
+      z +
+      state.depthM / 2
+    ) /
+    state.cellDepthM -
+    0.5;
+
+  if (
+    gridX < 0 ||
+    gridZ < 0 ||
+    gridX >
+      state.resolution - 1 ||
+    gridZ >
+      state.resolution - 1
+  ) {
+    return null;
+  }
+
+
+  const sampleGrid =
+    (sampleX, sampleZ) => {
+      const safeX =
+        clamp(
+          sampleX,
+          0,
+          state.resolution - 1
+        );
+
+      const safeZ =
+        clamp(
+          sampleZ,
+          0,
+          state.resolution - 1
+        );
+
+      const x0 =
+        Math.floor(
+          safeX
+        );
+
+      const z0 =
+        Math.floor(
+          safeZ
+        );
+
+      const x1 =
+        Math.min(
+          x0 + 1,
+          state.resolution - 1
+        );
+
+      const z1 =
+        Math.min(
+          z0 + 1,
+          state.resolution - 1
+        );
+
+      const fx =
+        safeX - x0;
+
+      const fz =
+        safeZ - z0;
+
+      const h00 =
+        state.heights[
+          z0 *
+          state.resolution +
+          x0
+        ];
+
+      const h10 =
+        state.heights[
+          z0 *
+          state.resolution +
+          x1
+        ];
+
+      const h01 =
+        state.heights[
+          z1 *
+          state.resolution +
+          x0
+        ];
+
+      const h11 =
+        state.heights[
+          z1 *
+          state.resolution +
+          x1
+        ];
+
+      return (
+        h00 * (1 - fx) * (1 - fz) +
+        h10 * fx * (1 - fz) +
+        h01 * (1 - fx) * fz +
+        h11 * fx * fz
+      );
+    };
+
+
+  const height =
+    sampleGrid(
+      gridX,
+      gridZ
+    );
+
+  const sampleDistance =
+    0.45;
+
+  const gradientX =
+    (
+      sampleGrid(
+        gridX + sampleDistance,
+        gridZ
+      ) -
+      sampleGrid(
+        gridX - sampleDistance,
+        gridZ
+      )
+    ) /
+    (
+      2 *
+      sampleDistance *
+      state.cellWidthM
+    );
+
+  const gradientZ =
+    (
+      sampleGrid(
+        gridX,
+        gridZ + sampleDistance
+      ) -
+      sampleGrid(
+        gridX,
+        gridZ - sampleDistance
+      )
+    ) /
+    (
+      2 *
+      sampleDistance *
+      state.cellDepthM
+    );
+
+  return {
+    height,
+    gradientX,
+    gradientZ
+  };
 }
 
 
@@ -7429,41 +7288,52 @@ function integrateFlowPath(
   const points =
     [];
 
+  const visitedCells =
+    new Set();
+
+  const direction =
+    new THREE.Vector2();
+
   let x =
     startX;
 
   let z =
     startZ;
 
-  const direction =
-    new THREE.Vector2();
+  let pathLength =
+    0;
 
-  const step =
+  const stepLength =
     Math.min(
       state.cellWidthM,
       state.cellDepthM
-    ) *
-    0.34;
+    ) * 0.30;
 
-  const lift =
+  const verticalLift =
     Math.max(
       1.4,
       Math.min(
         state.cellWidthM,
         state.cellDepthM
-      ) *
-      0.12
+      ) * 0.12
     );
 
   const maximumSteps =
     Math.min(
-      2400,
-      state.resolution *
-      14
+      3000,
+      state.resolution * 18
     );
 
-  let length =
-    0;
+  const maximumDirectionTurn =
+    degreesToRadians(
+      105
+    );
+
+  const minimumSeparation =
+    Math.min(
+      state.cellWidthM,
+      state.cellDepthM
+    ) * 0.38;
 
 
   for (
@@ -7487,11 +7357,47 @@ function integrateFlowPath(
       break;
     }
 
+
+    const cellX =
+      Math.floor(
+        (
+          x +
+          state.widthM / 2
+        ) /
+        state.cellWidthM
+      );
+
+    const cellZ =
+      Math.floor(
+        (
+          z +
+          state.depthM / 2
+        ) /
+        state.cellDepthM
+      );
+
+    const cellKey =
+      `${cellX}:${cellZ}`;
+
+
+    if (
+      visitedCells.has(
+        cellKey
+      )
+    ) {
+      break;
+    }
+
+    visitedCells.add(
+      cellKey
+    );
+
+
     points.push(
       new THREE.Vector3(
         x,
         sample.height +
-        lift,
+        verticalLift,
         z
       )
     );
@@ -7503,9 +7409,10 @@ function integrateFlowPath(
         -sample.gradientZ
       );
 
+
     if (
       downhill.lengthSq() >
-      0.0000001
+      0.000000001
     ) {
       downhill.normalize();
 
@@ -7517,14 +7424,27 @@ function integrateFlowPath(
           downhill
         );
       } else {
+        const turn =
+          direction.angleTo(
+            downhill
+          );
+
+        if (
+          turn >
+          maximumDirectionTurn
+        ) {
+          break;
+        }
+
         direction.lerp(
           downhill,
-          0.13
+          0.16
         );
 
         direction.normalize();
       }
     }
+
 
     if (
       direction.lengthSq() ===
@@ -7533,32 +7453,31 @@ function integrateFlowPath(
       break;
     }
 
+
     const nextX =
       x +
       direction.x *
-      step;
+      stepLength;
 
     const nextZ =
       z +
       direction.y *
-      step;
+      stepLength;
+
 
     if (
       nextX <
-        -state.widthM /
-        2 ||
+        -state.widthM / 2 ||
       nextX >
-        state.widthM /
-        2 ||
+        state.widthM / 2 ||
       nextZ <
-        -state.depthM /
-        2 ||
+        -state.depthM / 2 ||
       nextZ >
-        state.depthM /
-        2
+        state.depthM / 2
     ) {
       break;
     }
+
 
     if (
       flowPointBlocked(
@@ -7569,34 +7488,52 @@ function integrateFlowPath(
       break;
     }
 
+
     const nextSample =
       sampleTerrainContinuous(
         nextX,
         nextZ
       );
 
+    if (!nextSample) {
+      break;
+    }
+
+
+    const maximumAllowedRise =
+      Math.max(
+        0.025,
+        stepLength * 0.015
+      );
+
     if (
-      !nextSample
+      nextSample.height >
+      sample.height +
+      maximumAllowedRise
     ) {
       break;
     }
+
 
     const nextPoint =
       new THREE.Vector3(
         nextX,
         nextSample.height +
-        lift,
+        verticalLift,
         nextZ
       );
 
+
     if (
-      pathSelfIntersects(
+      wouldRevisitOldFlowPath(
         points,
-        nextPoint
+        nextPoint,
+        minimumSeparation
       )
     ) {
       break;
     }
+
 
     x =
       nextX;
@@ -7604,49 +7541,105 @@ function integrateFlowPath(
     z =
       nextZ;
 
-    length +=
-      step;
+    pathLength +=
+      stepLength;
   }
 
+
   if (
-    length <
+    pathLength <
     Math.min(
       state.widthM,
       state.depthM
-    ) *
-    0.025
+    ) * 0.035
   ) {
     return [];
   }
 
-  return points;
+
+  return truncateFlowPathAtLoop(
+    points,
+    0.32
+  );
 }
 
 
 function smoothFlowPath(
   points
 ) {
-  if (
-    points.length < 3
-  ) {
+  if (points.length < 3) {
     return points;
   }
 
-  const curve =
-    new THREE.CatmullRomCurve3(
+  let current =
+    truncateFlowPathAtLoop(
       points,
-      false,
-      "centripetal",
-      0.3
+      0.32
     );
 
-  return curve.getPoints(
-    Math.max(
-      40,
-      points.length *
-      2
-    )
-  );
+
+  /*
+   * Chaikin smoothing avoids the
+   * overshoot produced by Catmull-Rom
+   * interpolation.
+   */
+  for (
+    let pass = 0;
+    pass < 2;
+    pass++
+  ) {
+    const next =
+      [
+        current[0].clone()
+      ];
+
+    for (
+      let index = 0;
+      index < current.length - 1;
+      index++
+    ) {
+      const a =
+        current[index];
+
+      const b =
+        current[index + 1];
+
+      const q =
+        new THREE.Vector3()
+          .lerpVectors(
+            a,
+            b,
+            0.22
+          );
+
+      const r =
+        new THREE.Vector3()
+          .lerpVectors(
+            a,
+            b,
+            0.78
+          );
+
+      next.push(
+        q,
+        r
+      );
+    }
+
+    next.push(
+      current[
+        current.length - 1
+      ].clone()
+    );
+
+    current =
+      truncateFlowPathAtLoop(
+        next,
+        0.22
+      );
+  }
+
+  return current;
 }
 
 
@@ -7663,9 +7656,7 @@ function clearFlowVisualization() {
 function rebuildFlowVisualization() {
   clearFlowVisualization();
 
-  if (
-    !terrainState
-  ) {
+  if (!terrainState) {
     return;
   }
 
@@ -7687,23 +7678,20 @@ function rebuildFlowVisualization() {
     Math.max(
       4,
       Math.floor(
-        terrainState.resolution /
-        12
+        terrainState.resolution / 12
       )
     );
 
 
   const addCandidate =
-    (x, z) => {
+    (startX, startZ) => {
       const path =
         integrateFlowPath(
-          x,
-          z
+          startX,
+          startZ
         );
 
-      if (
-        path.length < 10
-      ) {
+      if (path.length < 10) {
         return;
       }
 
@@ -7716,44 +7704,24 @@ function rebuildFlowVisualization() {
         ];
 
       const key =
-        `${Math.round(
-          first.x
-        )}:${
-          Math.round(
-            first.z
-          )
-        }:${
-          Math.round(
-            last.x
-          )
-        }:${
-          Math.round(
-            last.z
-          )
-        }`;
+        `${Math.round(first.x)}:` +
+        `${Math.round(first.z)}:` +
+        `${Math.round(last.x)}:` +
+        `${Math.round(last.z)}`;
 
-      if (
-        seen.has(
-          key
-        )
-      ) {
+      if (seen.has(key)) {
         return;
       }
 
-      seen.add(
-        key
-      );
+      seen.add(key);
 
-      candidates.push(
-        {
-          path,
+      candidates.push({
+        path,
 
-          score:
-            path.length +
-            random() *
-            80
-        }
-      );
+        score:
+          path.length +
+          random() * 80
+      });
     };
 
 
@@ -7772,11 +7740,9 @@ function rebuildFlowVisualization() {
           x + 0.5
         ) *
         terrainState.cellWidthM -
-        terrainState.widthM /
-        2 +
+        terrainState.widthM / 2 +
         (
-          random() -
-          0.5
+          random() - 0.5
         ) *
         terrainState.cellWidthM *
         2.5,
@@ -7785,11 +7751,9 @@ function rebuildFlowVisualization() {
           z + 0.5
         ) *
         terrainState.cellDepthM -
-        terrainState.depthM /
-        2 +
+        terrainState.depthM / 2 +
         (
-          random() -
-          0.5
+          random() - 0.5
         ) *
         terrainState.cellDepthM *
         2.5
@@ -7805,22 +7769,19 @@ function rebuildFlowVisualization() {
     candidates.length <
       maximumPaths &&
     attempts <
-      maximumPaths *
-      55
+      maximumPaths * 55
   ) {
     attempts++;
 
     addCandidate(
       (
-        random() -
-        0.5
+        random() - 0.5
       ) *
       terrainState.widthM *
       0.96,
 
       (
-        random() -
-        0.5
+        random() - 0.5
       ) *
       terrainState.depthM *
       0.96
@@ -7842,14 +7803,32 @@ function rebuildFlowVisualization() {
     )
     .forEach(
       (candidate) => {
+        const safePath =
+          truncateFlowPathAtLoop(
+            candidate.path,
+            0.32
+          );
+
         const smooth =
           smoothFlowPath(
-            candidate.path
+            safePath
           );
+
+        const finalPath =
+          truncateFlowPathAtLoop(
+            smooth,
+            0.20
+          );
+
+        if (
+          finalPath.length < 8
+        ) {
+          return;
+        }
 
         const line =
           createWideLine(
-            smooth,
+            finalPath,
             0x9bd1e5,
             2.7,
             0.94,
@@ -7857,16 +7836,14 @@ function rebuildFlowVisualization() {
             80
           );
 
-        if (
-          line
-        ) {
+        if (line) {
           flowGroup.add(
             line
           );
         }
 
         flowExportPaths.push(
-          smooth.map(
+          finalPath.map(
             (point) =>
               point.clone()
           )
@@ -7879,14 +7856,14 @@ function rebuildFlowVisualization() {
 
 
 function updateFlowVisibility() {
-  if (
-    flowGroup
-  ) {
-    flowGroup.visible =
-      $("showFlow")
-        ? $("showFlow").checked
-        : true;
+  if (!flowGroup) {
+    return;
   }
+
+  flowGroup.visible =
+    $("showFlow")
+      ? $("showFlow").checked
+      : true;
 }
 
 
@@ -8015,9 +7992,7 @@ function renderDesignComparison() {
   const container =
     $("designComparisonTable");
 
-  if (
-    !container
-  ) {
+  if (!container) {
     return;
   }
 
@@ -8025,13 +8000,14 @@ function renderDesignComparison() {
     "";
 
   if (
-    storedDesigns.length ===
-    0
+    storedDesigns.length === 0
   ) {
     container.innerHTML =
-      `<div class="empty-comparison">
-        No designs stored.
-      </div>`;
+      `
+        <div class="empty-comparison">
+          No designs stored.
+        </div>
+      `;
 
     return;
   }
@@ -8061,6 +8037,7 @@ function renderDesignComparison() {
     table.querySelector(
       "tbody"
     );
+
 
   storedDesigns.forEach(
     (design) => {
@@ -8133,6 +8110,7 @@ function serializePly(
       "end_header"
     ];
 
+
   for (
     let index = 0;
     index < mesh.vertices.length;
@@ -8143,11 +8121,10 @@ function serializePly(
         mesh.vertices[index],
         mesh.vertices[index + 1],
         mesh.vertices[index + 2]
-      ].join(
-        " "
-      )
+      ].join(" ")
     );
   }
+
 
   mesh.triangles.forEach(
     (triangle) => {
@@ -8182,6 +8159,7 @@ function serializeColoredPly(
       "end_header"
     ];
 
+
   for (
     let index = 0;
     index < mesh.vertices.length / 3;
@@ -8189,38 +8167,16 @@ function serializeColoredPly(
   ) {
     lines.push(
       [
-        mesh.vertices[
-          index * 3
-        ],
-
-        mesh.vertices[
-          index * 3 +
-          1
-        ],
-
-        mesh.vertices[
-          index * 3 +
-          2
-        ],
-
-        mesh.colors[
-          index * 3
-        ],
-
-        mesh.colors[
-          index * 3 +
-          1
-        ],
-
-        mesh.colors[
-          index * 3 +
-          2
-        ]
-      ].join(
-        " "
-      )
+        mesh.vertices[index * 3],
+        mesh.vertices[index * 3 + 1],
+        mesh.vertices[index * 3 + 2],
+        mesh.colors[index * 3],
+        mesh.colors[index * 3 + 1],
+        mesh.colors[index * 3 + 2]
+      ].join(" ")
     );
   }
+
 
   mesh.triangles.forEach(
     (triangle) => {
@@ -8245,8 +8201,7 @@ function serializeStl(
   const buffer =
     new ArrayBuffer(
       84 +
-      triangleCount *
-      50
+      triangleCount * 50
     );
 
   const view =
@@ -8266,9 +8221,7 @@ function serializeStl(
     view.setUint8(
       index,
       index < header.length
-        ? header.charCodeAt(
-            index
-          )
+        ? header.charCodeAt(index)
         : 0
     );
   }
@@ -8283,19 +8236,9 @@ function serializeStl(
   const readVertex =
     (index) => {
       return new THREE.Vector3(
-        mesh.vertices[
-          index * 3
-        ],
-
-        mesh.vertices[
-          index * 3 +
-          1
-        ],
-
-        mesh.vertices[
-          index * 3 +
-          2
-        ]
+        mesh.vertices[index * 3],
+        mesh.vertices[index * 3 + 1],
+        mesh.vertices[index * 3 + 2]
       );
     };
 
@@ -8355,8 +8298,7 @@ function serializeStl(
         true
       );
 
-      offset +=
-        4;
+      offset += 4;
 
       view.setFloat32(
         offset,
@@ -8364,8 +8306,7 @@ function serializeStl(
         true
       );
 
-      offset +=
-        4;
+      offset += 4;
 
       view.setFloat32(
         offset,
@@ -8373,8 +8314,7 @@ function serializeStl(
         true
       );
 
-      offset +=
-        4;
+      offset += 4;
 
 
       [
@@ -8389,8 +8329,7 @@ function serializeStl(
             true
           );
 
-          offset +=
-            4;
+          offset += 4;
 
           view.setFloat32(
             offset,
@@ -8398,8 +8337,7 @@ function serializeStl(
             true
           );
 
-          offset +=
-            4;
+          offset += 4;
 
           view.setFloat32(
             offset,
@@ -8407,8 +8345,7 @@ function serializeStl(
             true
           );
 
-          offset +=
-            4;
+          offset += 4;
         }
       );
 
@@ -8418,8 +8355,7 @@ function serializeStl(
         true
       );
 
-      offset +=
-        2;
+      offset += 2;
     }
   );
 
@@ -8436,9 +8372,7 @@ function downloadBlob(
     data instanceof Blob
       ? data
       : new Blob(
-          [
-            data
-          ],
+          [data],
           {
             type:
               mimeType
@@ -8508,7 +8442,7 @@ function downloadWaterVolume(
   if (
     !currentResult ||
     currentResult.retainedVolumeM3 <=
-    0.000001
+      0.000001
   ) {
     alert(
       "There is currently no retained water to export."
@@ -8523,31 +8457,28 @@ function downloadWaterVolume(
     );
 
   const isPly =
-    format ===
-    "ply";
+    format === "ply";
+
+  const extension =
+    isPly
+      ? "ply"
+      : "stl";
+
+  const data =
+    isPly
+      ? serializePly(mesh)
+      : serializeStl(mesh);
 
   downloadBlob(
-    isPly
-      ? serializePly(
-          mesh
-        )
-      : serializeStl(
-          mesh
-        ),
-
-    `${terrainFilenameSlug()}-retained-water.${
-      isPly
-        ? "ply"
-        : "stl"
-    }`,
-
+    data,
+    `${terrainFilenameSlug()}-retained-water.${extension}`,
     isPly
       ? "application/octet-stream"
       : "model/stl"
   );
 
   setStatus(
-    `${isPly ? "PLY" : "STL"} DOWNLOADED`
+    `${extension.toUpperCase()} DOWNLOADED`
   );
 }
 
@@ -8557,17 +8488,17 @@ function serializeFlowLinesObj(
 ) {
   const lines =
     [
-      "# Rainwater retention flow lines"
+      "# Rainwater retention line export",
+      "# Coordinates are physical model units"
     ];
 
   let vertexIndex =
     1;
 
+
   paths.forEach(
     (path, pathIndex) => {
-      if (
-        path.length < 2
-      ) {
+      if (path.length < 2) {
         return;
       }
 
@@ -8591,14 +8522,11 @@ function serializeFlowLinesObj(
       const indices =
         path.map(
           (_, index) =>
-            vertexIndex +
-            index
+            vertexIndex + index
         );
 
       lines.push(
-        `l ${indices.join(
-          " "
-        )}`
+        `l ${indices.join(" ")}`
       );
 
       vertexIndex +=
@@ -8613,6 +8541,17 @@ function serializeFlowLinesObj(
 
 
 function downloadFlowLinesObj() {
+  if (
+    flowExportPaths.length ===
+    0
+  ) {
+    alert(
+      "There are currently no flow lines to export."
+    );
+
+    return;
+  }
+
   downloadBlob(
     serializeFlowLinesObj(
       flowExportPaths
@@ -8629,7 +8568,8 @@ function downloadFlowLinesObj() {
 
 function downloadSlopeOrientation() {
   if (
-    !terrainState
+    !terrainState ||
+    !terrainState.slopeOrientationPaths
   ) {
     return;
   }
@@ -8650,7 +8590,8 @@ function downloadSlopeOrientation() {
 
 function downloadSlopeSteepness() {
   if (
-    !terrainState
+    !terrainState ||
+    !terrainState.slopeSteepnessExport
   ) {
     return;
   }
@@ -8671,7 +8612,8 @@ function downloadSlopeSteepness() {
 
 function downloadWatersheds() {
   if (
-    !terrainState
+    !terrainState ||
+    !terrainState.watershedExport
   ) {
     return;
   }
@@ -8698,19 +8640,19 @@ function downloadViewerPng() {
 
   renderer.domElement.toBlob(
     (blob) => {
-      if (
-        blob
-      ) {
-        downloadBlob(
-          blob,
-          "rainwater-retention-viewer.png",
-          "image/png"
-        );
-
-        setStatus(
-          "PNG DOWNLOADED"
-        );
+      if (!blob) {
+        return;
       }
+
+      downloadBlob(
+        blob,
+        "rainwater-retention-viewer.png",
+        "image/png"
+      );
+
+      setStatus(
+        "PNG DOWNLOADED"
+      );
     },
     "image/png"
   );
@@ -8763,6 +8705,7 @@ function downloadRetentionCsv() {
       ]
     ];
 
+
   designs.forEach(
     (design) => {
       rows.push([
@@ -8781,6 +8724,7 @@ function downloadRetentionCsv() {
         "",
         ""
       ]);
+
 
       design.basins.forEach(
         (basin) => {
@@ -8805,6 +8749,7 @@ function downloadRetentionCsv() {
     }
   );
 
+
   const csv =
     rows
       .map(
@@ -8813,13 +8758,9 @@ function downloadRetentionCsv() {
             .map(
               csvEscape
             )
-            .join(
-              ","
-            )
+            .join(",")
       )
-      .join(
-        "\n"
-      );
+      .join("\n");
 
   downloadBlob(
     csv,
@@ -8834,7 +8775,7 @@ function downloadRetentionCsv() {
 
 
 /* =========================================================
-   MODEL LOADING
+   MODEL FILE LOADING
 ========================================================= */
 
 function collectTrianglesFromObject(
@@ -8846,6 +8787,7 @@ function collectTrianglesFromObject(
   root.updateMatrixWorld(
     true
   );
+
 
   root.traverse(
     (child) => {
@@ -8893,9 +8835,7 @@ function collectTrianglesFromObject(
         };
 
 
-      if (
-        index
-      ) {
+      if (index) {
         for (
           let i = 0;
           i + 2 < index.count;
@@ -8903,21 +8843,15 @@ function collectTrianglesFromObject(
         ) {
           triangles.push([
             readVertex(
-              index.getX(
-                i
-              )
+              index.getX(i)
             ),
 
             readVertex(
-              index.getX(
-                i + 1
-              )
+              index.getX(i + 1)
             ),
 
             readVertex(
-              index.getX(
-                i + 2
-              )
+              index.getX(i + 2)
             )
           ]);
         }
@@ -8928,17 +8862,9 @@ function collectTrianglesFromObject(
           i += 3
         ) {
           triangles.push([
-            readVertex(
-              i
-            ),
-
-            readVertex(
-              i + 1
-            ),
-
-            readVertex(
-              i + 2
-            )
+            readVertex(i),
+            readVertex(i + 1),
+            readVertex(i + 2)
           ]);
         }
       }
@@ -8955,10 +8881,25 @@ async function loadModelFile(
   const extension =
     file.name
       .toLowerCase()
-      .split(
-        "."
-      )
+      .split(".")
       .pop();
+
+  if (
+    ![
+      "ply",
+      "stl",
+      "obj"
+    ].includes(
+      extension
+    )
+  ) {
+    alert(
+      "Please upload a PLY, STL or OBJ file."
+    );
+
+    return;
+  }
+
 
   try {
     setStatus(
@@ -8969,8 +8910,7 @@ async function loadModelFile(
 
 
     if (
-      extension ===
-      "obj"
+      extension === "obj"
     ) {
       object =
         new OBJLoader().parse(
@@ -8981,14 +8921,19 @@ async function loadModelFile(
         await file.arrayBuffer();
 
       const geometry =
-        extension ===
-        "ply"
+        extension === "ply"
           ? new PLYLoader().parse(
               buffer
             )
           : new STLLoader().parse(
               buffer
             );
+
+      if (
+        !geometry.attributes.normal
+      ) {
+        geometry.computeVertexNormals();
+      }
 
       object =
         new THREE.Mesh(
@@ -9020,9 +8965,7 @@ async function loadModelFile(
         ""
       );
 
-    if (
-      $("designName")
-    ) {
+    if ($("designName")) {
       $("designName").value =
         currentTerrainName;
     }
@@ -9032,12 +8975,8 @@ async function loadModelFile(
     setStatus(
       "READY"
     );
-  } catch (
-    error
-  ) {
-    console.error(
-      error
-    );
+  } catch (error) {
+    console.error(error);
 
     setStatus(
       "MODEL ERROR"

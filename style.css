@@ -19,8 +19,6 @@
   --interface-width: 390px;
 }
 
-/* RESET */
-
 * {
   box-sizing: border-box;
 }
@@ -86,11 +84,6 @@ button:active {
   background: #0c0e0f;
 }
 
-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.45;
-}
-
 button:focus-visible,
 input:focus-visible,
 select:focus-visible,
@@ -99,8 +92,6 @@ summary:focus-visible,
   outline: 1px solid var(--water-light);
   outline-offset: 2px;
 }
-
-/* MAIN LAYOUT */
 
 #app {
   display: grid;
@@ -112,8 +103,6 @@ summary:focus-visible,
   height: 100dvh;
   min-height: 0;
 }
-
-/* VIEWER */
 
 #viewer {
   position: relative;
@@ -157,12 +146,6 @@ summary:focus-visible,
   pointer-events: none;
 }
 
-.labels-layer > div {
-  pointer-events: none;
-}
-
-/* INTERFACE */
-
 #interface {
   position: relative;
 
@@ -179,7 +162,6 @@ summary:focus-visible,
 
   overflow-x: hidden;
   overflow-y: auto;
-  overscroll-behavior: contain;
 
   background: var(--panel);
   border-left: 1px solid var(--border);
@@ -199,12 +181,6 @@ summary:focus-visible,
 #interface::-webkit-scrollbar-thumb {
   background: #454c50;
 }
-
-#interface::-webkit-scrollbar-thumb:hover {
-  background: #687277;
-}
-
-/* HEADER */
 
 .eyebrow {
   margin-bottom: 14px;
@@ -327,8 +303,6 @@ h1 {
   white-space: nowrap;
 }
 
-/* CONTROLS */
-
 .controls {
   display: flex;
   flex-direction: column;
@@ -421,8 +395,6 @@ label {
   text-transform: uppercase;
 }
 
-/* INPUTS */
-
 input[type="number"],
 input[type="text"],
 select {
@@ -440,8 +412,8 @@ select {
 }
 
 input[type="number"] {
-  width: 95px;
-  flex: 0 0 95px;
+  width: 105px;
+  flex: 0 0 105px;
 }
 
 input[type="text"] {
@@ -489,8 +461,6 @@ input[type="checkbox"] {
   letter-spacing: 0.04em;
 }
 
-/* BUTTONS */
-
 .button-row {
   display: grid;
   grid-template-columns:
@@ -517,8 +487,6 @@ input[type="checkbox"] {
   text-overflow: ellipsis;
   white-space: normal;
 }
-
-/* READOUT */
 
 .water-readout {
   min-width: 0;
@@ -627,8 +595,6 @@ input[type="checkbox"] {
   white-space: nowrap;
 }
 
-/* COMPARISON */
-
 #designComparisonTable {
   width: 100%;
   max-width: 100%;
@@ -678,8 +644,6 @@ input[type="checkbox"] {
   color: var(--water-light);
   font-weight: 700;
 }
-
-/* FILE INPUT */
 
 #dropZone {
   display: flex;
@@ -736,8 +700,6 @@ input[type="checkbox"] {
   letter-spacing: 0.025em;
 }
 
-/* BASIN LABELS */
-
 .basin-label {
   min-width: 100px;
   padding: 6px 8px;
@@ -776,8 +738,6 @@ input[type="checkbox"] {
   font-size: 10px;
 }
 
-/* FOOTER */
-
 footer {
   display: flex;
   justify-content: space-between;
@@ -810,8 +770,6 @@ footer {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-
-/* MOBILE */
 
 @media (max-width: 820px) {
   html,

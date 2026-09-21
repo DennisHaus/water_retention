@@ -69,17 +69,17 @@
             <section>
               <strong>SURFACE FLOW</strong>
 
-              Each terrain cell routes water to its steepest downhill
-              neighbouring cell. Water either reaches an interior depression
-              or leaves through the terrain boundary.
+              Flowlines follow an interpolated downhill terrain gradient.
+              They are visual representations rather than engineering flow
+              calculations.
             </section>
 
             <section>
               <strong>RETENTION</strong>
 
-              Rainfall entering an interior depression is retained until the
-              depression reaches its lowest spill elevation. Excess water is
-              routed to a downstream basin or out of the terrain.
+              Rainfall entering a depression is retained until it reaches its
+              spill elevation. Excess water is passed to a downstream basin or
+              counted as runoff.
             </section>
 
             <section>
@@ -100,10 +100,10 @@
             <section>
               <strong>EXPORT</strong>
 
-              PLY and STL exports contain a triangulated mesh representing the
-              currently retained water volume. Flow lines are exported as OBJ.
-              Exported geometry uses physical model units and excludes visual
-              vertical exaggeration.
+              PLY and STL exports use the same smoothed pond boundaries shown
+              in the viewer. Flowlines are exported as OBJ. Exported geometry
+              uses physical model units and excludes visual vertical
+              exaggeration.
             </section>
 
           </div>
@@ -279,7 +279,7 @@
                   class="numeric-input"
                   type="number"
                   min="0.1"
-                  max="10"
+                  max="10000"
                   step="0.1"
                   value="1"
                 >
@@ -289,7 +289,7 @@
                 id="modelScale"
                 type="range"
                 min="0.1"
-                max="10"
+                max="10000"
                 step="0.1"
                 value="1"
               >
@@ -306,9 +306,9 @@
                   id="metersPerModelUnitNumber"
                   class="numeric-input"
                   type="number"
-                  min="0.01"
+                  min="0.0001"
                   max="100"
-                  step="0.01"
+                  step="0.0001"
                   value="1"
                 >
               </div>
@@ -316,9 +316,9 @@
               <input
                 id="metersPerModelUnit"
                 type="range"
-                min="0.01"
+                min="0.0001"
                 max="100"
-                step="0.01"
+                step="0.0001"
                 value="1"
               >
             </div>
@@ -540,8 +540,7 @@
             </button>
 
             <div class="control-note">
-              Exports the currently retained water as a triangulated physical
-              volume mesh.
+              Exports the same smoothed pond form visible in the viewer.
             </div>
 
           </div>
@@ -568,8 +567,8 @@
             </button>
 
             <div class="control-note">
-              The PNG captures the 3D viewer. The OBJ contains smoothed
-              three-dimensional flow lines in physical model units.
+              The PNG captures the 3D viewer. The OBJ contains smooth
+              continuous-gradient flowlines.
             </div>
 
           </div>
@@ -701,8 +700,9 @@
 
 
       <div id="sourceHint">
-        Uploaded models are sampled as regular heightfields. Their outer
-        boundary acts as an open drainage boundary.
+        Expected orientation: Y is vertical; X and Z are horizontal. Use the
+        scale controls when importing millimetre, centimetre or reduced-scale
+        models.
       </div>
 
 

@@ -44,8 +44,9 @@
         </h1>
 
         <p class="description">
-          A simplified topography-based model for visualising how rainfall is
-          retained in depressions, basins and artificial dams.
+          A simplified topography-based model for visualising how rainfall
+          moves across a terrain and is retained in depressions, basins and
+          artificial dams.
 
           <br><br>
 
@@ -67,33 +68,32 @@
             <section>
               <strong>TOPOGRAPHY</strong>
 
-              The model uses a regular heightfield. Uploaded PLY, STL and OBJ
-              models are sampled into one elevation value per horizontal cell.
+              Uploaded PLY, STL and OBJ models are sampled into a regular
+              heightfield. Each horizontal cell has one terrain elevation.
             </section>
 
             <section>
-              <strong>RETENTION MODEL</strong>
+              <strong>SURFACE FLOW</strong>
 
-              Rainfall is treated as surface runoff that can collect in
-              topographic depressions. Each depression is filled until its
-              lowest spill point. Water leaving the terrain boundary or
-              exceeding the available retention capacity is counted as runoff
-              or spill.
+              Water follows the steepest downhill neighbouring cell. The blue
+              traces and moving particles show the approximate surface-flow
+              direction.
             </section>
 
             <section>
-              <strong>VOLUME</strong>
+              <strong>RETENTION</strong>
 
-              Retained water volume is calculated from the water depth in each
-              terrain cell multiplied by the horizontal cell area.
+              Rainfall is treated as surface water that collects in
+              depressions. Each depression fills until its lowest spill point.
+              Water that cannot be retained is counted as runoff or spill.
             </section>
 
             <section>
               <strong>LIMITATIONS</strong>
 
-              This model does not calculate infiltration, evaporation,
-              groundwater, soil permeability, flow velocity, pipe drainage,
-              sediment transport or engineering flood behaviour.
+              This is not an engineering flood model. It does not calculate
+              infiltration, evaporation, groundwater, soil permeability,
+              drainage infrastructure, sediment transport or flow velocity.
             </section>
 
             <section>
@@ -104,11 +104,21 @@
               low.
             </section>
 
+            <section>
+              <strong>EXPORT</strong>
+
+              PLY and STL exports contain a triangulated surface mesh of the
+              currently retained water volume. The exported geometry uses
+              physical model units and does not include visual vertical
+              exaggeration.
+            </section>
+
           </div>
         </details>
 
         <div class="current-terrain">
           <span>TOPOGRAPHY</span>
+
           <strong id="terrainNameReadout">
             GENERATED ALPINE BASIN
           </strong>
@@ -213,6 +223,21 @@
 
             <div class="control">
               <div class="label-row">
+                <label for="showFlow">
+                  SHOW SURFACE FLOW
+                </label>
+
+                <input
+                  id="showFlow"
+                  type="checkbox"
+                  checked
+                >
+              </div>
+            </div>
+
+
+            <div class="control">
+              <div class="label-row">
                 <label for="showWaterLabels">
                   SHOW WATER LABELS
                 </label>
@@ -223,6 +248,10 @@
                   checked
                 >
               </div>
+            </div>
+
+            <div class="flow-legend">
+              BLUE TRACES = APPROXIMATE DOWNHILL FLOW
             </div>
 
           </div>
@@ -520,6 +549,34 @@
               <div class="empty-comparison">
                 No designs stored.
               </div>
+            </div>
+
+          </div>
+        </details>
+
+
+        <details>
+          <summary>EXPORT RETAINED WATER</summary>
+
+          <div class="details-body">
+
+            <button
+              id="downloadWaterPlyButton"
+              type="button"
+            >
+              DOWNLOAD WATER VOLUME PLY
+            </button>
+
+            <button
+              id="downloadWaterStlButton"
+              type="button"
+            >
+              DOWNLOAD WATER VOLUME STL
+            </button>
+
+            <div class="control-note">
+              Exports the currently visible retained water volume. The
+              geometry uses physical model units, not visual exaggeration.
             </div>
 
           </div>

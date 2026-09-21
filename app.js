@@ -404,7 +404,7 @@ const MAX_PROCEDURAL_SLOPE_RATIO =
   );
 
 const BASIN_SIGNIFICANCE_RATIO =
-  0.05;
+  0.02;
 
 
 /* =========================================================

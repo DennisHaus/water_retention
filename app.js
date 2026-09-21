@@ -11,24 +11,34 @@ import {
 } from "three/addons/renderers/CSS2DRenderer.js";
 
 
+/* --------------------------------------------------
+   HELPERS
+-------------------------------------------------- */
+
 const $ = (id) => {
   return document.getElementById(id);
 };
 
 
-const NEIGHBOURS = [
-  [-1, 0],
-  [1, 0],
-  [0, -1],
-  [0, 1]
-];
+function onClick(id, callback) {
+  const element = $(id);
+
+  if (element) {
+    element.addEventListener("click", callback);
+  }
+}
 
 
-const clamp = (
-  value,
-  minimum,
-  maximum
-) => {
+function isChecked(id, fallback = false) {
+  const element = $(id);
+
+  return element
+    ? element.checked
+    : fallback;
+}
+
+
+function clamp(value, minimum, maximum) {
   return Math.min(
     maximum,
     Math.max(
@@ -36,27 +46,30 @@ const clamp = (
       value
     )
   );
-};
+}
 
 
-const numberValue = (id) => {
-  const value = Number($(id).value);
+function numberValue(id) {
+  const element = $(id);
+
+  if (!element) {
+    return 0;
+  }
+
+  const value = Number(element.value);
 
   return Number.isFinite(value)
     ? value
     : 0;
-};
+}
 
 
-const degreesToRadians = (degrees) => {
+function degreesToRadians(degrees) {
   return degrees * Math.PI / 180;
-};
+}
 
 
-const formatNumber = (
-  value,
-  decimals = 2
-) => {
+function formatNumber(value, decimals = 2) {
   return Number(value).toLocaleString(
     "en-US",
     {
@@ -64,23 +77,23 @@ const formatNumber = (
       maximumFractionDigits: decimals
     }
   );
-};
+}
 
 
-const formatInteger = (value) => {
+function formatInteger(value) {
   return Math.round(
     Number(value)
   ).toLocaleString("en-US");
-};
+}
 
 
-const formatVolume = (volumeM3) => {
+function formatVolume(volumeM3) {
   if (volumeM3 < 1) {
     return `${formatInteger(volumeM3 * 1000)} L`;
   }
 
   return `${formatNumber(volumeM3, 2)} m³`;
-};
+}
 
 
 function setStatus(message) {
@@ -92,6 +105,38 @@ function setStatus(message) {
 
   element.textContent =
     String(message).toUpperCase();
+}
+
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+
+function csvEscape(value) {
+  const stringValue =
+    value === null ||
+    value === undefined
+      ? ""
+      : String(value);
+
+  if (
+    stringValue.includes(",") ||
+    stringValue.includes('"') ||
+    stringValue.includes("\n")
+  ) {
+    return `"${stringValue.replaceAll(
+      '"',
+      '""'
+    )}"`;
+  }
+
+  return stringValue;
 }
 
 
@@ -130,9 +175,7 @@ function newRandomSeed() {
     const values =
       new Uint32Array(1);
 
-    window.crypto.getRandomValues(
-      values
-    );
+    window.crypto.getRandomValues(values);
 
     return values[0];
   }
@@ -147,6 +190,26 @@ function newRandomSeed() {
   );
 }
 
+
+/* --------------------------------------------------
+   CONSTANTS
+-------------------------------------------------- */
+
+const NEIGHBOURS = [
+  [-1, -1],
+  [0, -1],
+  [1, -1],
+  [-1, 0],
+  [1, 0],
+  [-1, 1],
+  [0, 1],
+  [1, 1]
+];
+
+
+/* --------------------------------------------------
+   PRIORITY QUEUE
+-------------------------------------------------- */
 
 class MinHeap {
   constructor() {
@@ -271,9 +334,6 @@ let labelGroup;
 let flowGroup;
 let flowParticleMesh;
 
-let flowParticleData = [];
-let flowExportPaths = [];
-
 let terrainState = null;
 let rawTriangles = null;
 
@@ -288,6 +348,9 @@ let displayedRainfall =
 
 let proceduralSeed = null;
 let flowSeed = 1;
+
+let flowParticleData = [];
+let flowExportPaths = [];
 
 
 /* --------------------------------------------------
@@ -348,9 +411,14 @@ function initializeScene() {
   renderer.toneMappingExposure =
     1.2;
 
-  $("viewer").appendChild(
-    renderer.domElement
-  );
+  const viewer =
+    $("viewer");
+
+  if (viewer) {
+    viewer.appendChild(
+      renderer.domElement
+    );
+  }
 
 
   labelRenderer =
@@ -499,11 +567,18 @@ function resizeRenderer() {
     return;
   }
 
+  const viewer =
+    $("viewer");
+
+  if (!viewer) {
+    return;
+  }
+
   const width =
-    $("viewer").clientWidth;
+    viewer.clientWidth;
 
   const height =
-    $("viewer").clientHeight;
+    viewer.clientHeight;
 
   camera.aspect =
     width / height;
@@ -524,7 +599,7 @@ function resizeRenderer() {
 
 
 /* --------------------------------------------------
-   INPUTS
+   INPUT BINDING
 -------------------------------------------------- */
 
 function bindPair(
@@ -538,6 +613,13 @@ function bindPair(
 
   const number =
     $(numberId);
+
+  if (
+    !range ||
+    !number
+  ) {
+    return;
+  }
 
   const update =
     (rawValue) => {
@@ -610,11 +692,21 @@ function setPairValue(
   numberId,
   value
 ) {
-  $(rangeId).value =
-    String(value);
+  const range =
+    $(rangeId);
 
-  $(numberId).value =
-    String(value);
+  const number =
+    $(numberId);
+
+  if (range) {
+    range.value =
+      String(value);
+  }
+
+  if (number) {
+    number.value =
+      String(value);
+  }
 }
 
 
@@ -692,23 +784,6 @@ function bindControls() {
 
 
   bindPair(
-    "verticalExaggeration",
-    "verticalExaggerationNumber",
-    (value) => {
-      if (
-        world
-      ) {
-        world.scale.y =
-          value;
-      }
-
-      updateCameraTarget();
-    },
-    "input"
-  );
-
-
-  bindPair(
     "depthScale",
     "depthScaleNumber",
     () => {
@@ -748,28 +823,55 @@ function bindControls() {
   );
 
 
-  $("showFlow").addEventListener(
-    "change",
-    updateFlowVisibility
-  );
-
-
-  $("showWaterLabels").addEventListener(
-    "change",
-    () => {
+  bindPair(
+    "verticalExaggeration",
+    "verticalExaggerationNumber",
+    (value) => {
       if (
-        currentResult
+        world
       ) {
-        updateBasinLabels(
-          currentResult
-        );
+        world.scale.y =
+          value;
       }
-    }
+
+      updateCameraTarget();
+    },
+    "input"
   );
 
 
-  $("clearWaterButton").addEventListener(
-    "click",
+  const showFlow =
+    $("showFlow");
+
+  if (showFlow) {
+    showFlow.addEventListener(
+      "change",
+      updateFlowVisibility
+    );
+  }
+
+
+  const showLabels =
+    $("showWaterLabels");
+
+  if (showLabels) {
+    showLabels.addEventListener(
+      "change",
+      () => {
+        if (
+          currentResult
+        ) {
+          updateBasinLabels(
+            currentResult
+          );
+        }
+      }
+    );
+  }
+
+
+  onClick(
+    "clearWaterButton",
     () => {
       setPairValue(
         "rainfallPerM2",
@@ -789,14 +891,35 @@ function bindControls() {
   );
 
 
-  $("resetViewButton").addEventListener(
-    "click",
+  onClick(
+    "emptyWaterButton",
+    () => {
+      setPairValue(
+        "rainfallPerM2",
+        "rainfallPerM2Number",
+        0
+      );
+
+      displayedRainfall =
+        0;
+
+      renderResult(
+        calculateRetentionForRainfall(
+          0
+        )
+      );
+    }
+  );
+
+
+  onClick(
+    "resetViewButton",
     frameCamera
   );
 
 
-  $("newTerrainButton").addEventListener(
-    "click",
+  onClick(
+    "newTerrainButton",
     () => {
       rawTriangles =
         null;
@@ -808,8 +931,8 @@ function bindControls() {
   );
 
 
-  $("resetModelOrientationButton").addEventListener(
-    "click",
+  onClick(
+    "resetModelOrientationButton",
     () => {
       setPairValue(
         "rotationX",
@@ -834,14 +957,14 @@ function bindControls() {
   );
 
 
-  $("storeDesignButton").addEventListener(
-    "click",
+  onClick(
+    "storeDesignButton",
     storeCurrentDesign
   );
 
 
-  $("clearDesignsButton").addEventListener(
-    "click",
+  onClick(
+    "clearDesignsButton",
     () => {
       storedDesigns =
         [];
@@ -851,14 +974,14 @@ function bindControls() {
   );
 
 
-  $("downloadRetentionButton").addEventListener(
-    "click",
+  onClick(
+    "downloadRetentionButton",
     downloadRetentionCsv
   );
 
 
-  $("downloadWaterPlyButton").addEventListener(
-    "click",
+  onClick(
+    "downloadWaterPlyButton",
     () => {
       downloadWaterVolume(
         "ply"
@@ -867,8 +990,8 @@ function bindControls() {
   );
 
 
-  $("downloadWaterStlButton").addEventListener(
-    "click",
+  onClick(
+    "downloadWaterStlButton",
     () => {
       downloadWaterVolume(
         "stl"
@@ -877,97 +1000,113 @@ function bindControls() {
   );
 
 
-  $("downloadViewerPngButton").addEventListener(
-    "click",
+  onClick(
+    "downloadViewerPngButton",
     downloadViewerPng
   );
 
 
-  $("downloadFlowObjButton").addEventListener(
-    "click",
+  onClick(
+    "downloadFlowObjButton",
     downloadFlowLinesObj
   );
 
 
-  $("chooseModelButton").addEventListener(
-    "click",
+  onClick(
+    "chooseModelButton",
     () => {
-      $("modelFileInput").click();
-    }
-  );
+      const input =
+        $("modelFileInput");
 
-
-  $("dropZone").addEventListener(
-    "click",
-    () => {
-      $("modelFileInput").click();
-    }
-  );
-
-
-  $("modelFileInput").addEventListener(
-    "change",
-    async (event) => {
-      const file =
-        event.target.files[0];
-
-      if (
-        file
-      ) {
-        await loadModelFile(
-          file
-        );
-      }
-
-      event.target.value =
-        "";
-    }
-  );
-
-
-  $("dropZone").addEventListener(
-    "dragover",
-    (event) => {
-      event.preventDefault();
-
-      $("dropZone").classList.add(
-        "drag-over"
-      );
-    }
-  );
-
-
-  $("dropZone").addEventListener(
-    "dragleave",
-    () => {
-      $("dropZone").classList.remove(
-        "drag-over"
-      );
-    }
-  );
-
-
-  $("dropZone").addEventListener(
-    "drop",
-    async (event) => {
-      event.preventDefault();
-
-      $("dropZone").classList.remove(
-        "drag-over"
-      );
-
-      const file =
-        event.dataTransfer.files[0];
-
-      if (
-        file
-      ) {
-        await loadModelFile(
-          file
-        );
+      if (input) {
+        input.click();
       }
     }
   );
+
+
+  const dropZone =
+    $("dropZone");
+
+  if (dropZone) {
+    dropZone.addEventListener(
+      "click",
+      () => {
+        const input =
+          $("modelFileInput");
+
+        if (input) {
+          input.click();
+        }
+      }
+    );
+
+
+    dropZone.addEventListener(
+      "dragover",
+      (event) => {
+        event.preventDefault();
+
+        dropZone.classList.add(
+          "drag-over"
+        );
+      }
+    );
+
+
+    dropZone.addEventListener(
+      "dragleave",
+      () => {
+        dropZone.classList.remove(
+          "drag-over"
+        );
+      }
+    );
+
+
+    dropZone.addEventListener(
+      "drop",
+      async (event) => {
+        event.preventDefault();
+
+        dropZone.classList.remove(
+          "drag-over"
+        );
+
+        const file =
+          event.dataTransfer.files[0];
+
+        if (file) {
+          await loadModelFile(
+            file
+          );
+        }
+      }
+    );
+  }
+
+
+  const modelInput =
+    $("modelFileInput");
+
+  if (modelInput) {
+    modelInput.addEventListener(
+      "change",
+      async (event) => {
+        const file =
+          event.target.files[0];
+
+        if (file) {
+          await loadModelFile(
+            file
+          );
+        }
+
+        event.target.value =
+          "";
+      }
+    );
+  }
 }
 
 
@@ -1192,12 +1331,16 @@ function generateProceduralHeightfield(
 
 
       const valleyX =
-        localX * cosAngle +
-        localZ * sinAngle;
+        localX *
+          cosAngle +
+        localZ *
+          sinAngle;
 
       const valleyZ =
-        -localX * sinAngle +
-        localZ * cosAngle;
+        -localX *
+          sinAngle +
+        localZ *
+          cosAngle;
 
 
       let height =
@@ -1628,7 +1771,7 @@ function rasterizeTrianglesToHeightfield(
     );
 
   heights.fill(
-    Infinity
+    -Infinity
   );
 
 
@@ -1859,7 +2002,7 @@ function rasterizeTrianglesToHeightfield(
           x;
 
         heights[index] =
-          Math.min(
+          Math.max(
             heights[index],
             height
           );
@@ -2223,6 +2366,7 @@ function computeFlowNetwork(
       let bestSlope =
         0;
 
+
       for (
         const [dx, dz] of NEIGHBOURS
       ) {
@@ -2369,13 +2513,21 @@ function computeFlowTerminals(
     const path =
       [];
 
+    const visited =
+      new Set();
+
     let current =
       start;
 
     while (
       terminals[current] ===
-      -2
+      -2 &&
+      !visited.has(current)
     ) {
+      visited.add(
+        current
+      );
+
       path.push(
         current
       );
@@ -2414,8 +2566,15 @@ function computeFlowTerminals(
         target;
     }
 
-    const resolved =
+    let resolved =
       terminals[current];
+
+    if (
+      resolved === -2
+    ) {
+      resolved =
+        current;
+    }
 
     for (
       const index of path
@@ -2905,6 +3064,153 @@ function calculateBasinFillFromVolume(
 }
 
 
+/*
+  This is the missing function from the previous file.
+*/
+function applyTerrainData(
+  data,
+  terrainName
+) {
+  setStatus(
+    "CALCULATING TERRAIN"
+  );
+
+  const cellWidthM =
+    data.widthM /
+    data.resolution;
+
+  const cellDepthM =
+    data.depthM /
+    data.resolution;
+
+  const cellAreaM2 =
+    cellWidthM *
+    cellDepthM;
+
+  const terrainAreaM2 =
+    data.widthM *
+    data.depthM;
+
+  const spillLevels =
+    computeSpillLevels(
+      data.heights,
+      data.resolution
+    );
+
+  const flow =
+    computeFlowNetwork(
+      data.heights,
+      data.resolution
+    );
+
+  const terminals =
+    computeFlowTerminals(
+      flow.targets,
+      data.resolution
+    );
+
+  const state = {
+    ...data,
+
+    cellWidthM,
+    cellDepthM,
+    cellAreaM2,
+    terrainAreaM2,
+
+    spillLevels,
+
+    flowTargets:
+      flow.targets,
+
+    flowAccumulation:
+      flow.accumulation,
+
+    flowTerminals:
+      terminals
+  };
+
+
+  let minimumHeight =
+    Infinity;
+
+  let maximumHeight =
+    -Infinity;
+
+  let maximumSpill =
+    -Infinity;
+
+  for (
+    let index = 0;
+    index < data.heights.length;
+    index++
+  ) {
+    minimumHeight =
+      Math.min(
+        minimumHeight,
+        data.heights[index]
+      );
+
+    maximumHeight =
+      Math.max(
+        maximumHeight,
+        data.heights[index]
+      );
+
+    maximumSpill =
+      Math.max(
+        maximumSpill,
+        spillLevels[index]
+      );
+  }
+
+  state.minimumHeight =
+    minimumHeight;
+
+  state.maximumHeight =
+    maximumHeight;
+
+  state.maximumSpill =
+    maximumSpill;
+
+  state.basinDefinitions =
+    buildBasinDefinitions(
+      state
+    );
+
+  state.basinProcessingOrder =
+    getBasinProcessingOrder(
+      state.basinDefinitions
+    );
+
+  terrainState =
+    state;
+
+  currentTerrainName =
+    terrainName;
+
+  flowSeed =
+    newRandomSeed();
+
+  rebuildTerrainMesh();
+  ensureWaterMesh();
+  rebuildFlowVisualization();
+
+  updateTerrainName();
+  updateVerticalDisplayScale();
+  frameCamera();
+
+  renderResult(
+    calculateRetentionForRainfall(
+      displayedRainfall
+    )
+  );
+
+  setStatus(
+    "READY"
+  );
+}
+
+
 function calculateRetentionForRainfall(
   rainfallLPerM2
 ) {
@@ -3261,7 +3567,7 @@ function calculateRetentionForRainfall(
 
 
 /* --------------------------------------------------
-   TERRAIN MESH
+   TERRAIN VISUALISATION
 -------------------------------------------------- */
 
 function rebuildTerrainMesh() {
@@ -3469,9 +3775,7 @@ function disposeWaterMesh() {
 }
 
 
-function updateWaterOpacity(
-  value
-) {
+function updateWaterOpacity(value) {
   if (
     !waterMesh
   ) {
@@ -3494,18 +3798,12 @@ function updateWaterOpacity(
 }
 
 
-function cellCornerKey(
-  x,
-  z
-) {
+function cellCornerKey(x, z) {
   return `${x}:${z}`;
 }
 
 
-function directedEdgeKey(
-  a,
-  b
-) {
+function directedEdgeKey(a, b) {
   return (
     `${cellCornerKey(a[0], a[1])}>` +
     `${cellCornerKey(b[0], b[1])}`
@@ -3696,9 +3994,7 @@ function buildBoundaryLoopsForCells(
       current =
         candidates.find(
           (edge) =>
-            unused.has(
-              edge
-            )
+            unused.has(edge)
         ) || null;
     }
 
@@ -3779,9 +4075,7 @@ function smoothClosedLoop(
 }
 
 
-function polygonArea(
-  points
-) {
+function polygonArea(points) {
   let area =
     0;
 
@@ -3820,22 +4114,33 @@ function createWaterSurfaceMesh(
     return null;
   }
 
+  let orderedPoints =
+    points.slice();
+
+  if (
+    polygonArea(
+      orderedPoints
+    ) < 0
+  ) {
+    orderedPoints.reverse();
+  }
+
   const shape =
     new THREE.Shape();
 
   shape.moveTo(
-    points[0].x,
-    points[0].z
+    orderedPoints[0].x,
+    orderedPoints[0].z
   );
 
   for (
     let index = 1;
-    index < points.length;
+    index < orderedPoints.length;
     index++
   ) {
     shape.lineTo(
-      points[index].x,
-      points[index].z
+      orderedPoints[index].x,
+      orderedPoints[index].z
     );
   }
 
@@ -3856,19 +4161,15 @@ function createWaterSurfaceMesh(
     index++
   ) {
     const x =
-      position.getX(
-        index
-      );
+      position.getX(index);
 
     const z =
-      position.getY(
-        index
-      );
+      position.getY(index);
 
     position.setXYZ(
       index,
       x,
-      waterLevel,
+      waterLevel + 0.04,
       z
     );
   }
@@ -3895,18 +4196,18 @@ function createWaterSurfaceMesh(
       side: THREE.DoubleSide
     });
 
-  const mesh =
+  const surface =
     new THREE.Mesh(
       geometry,
       material
     );
 
-  mesh.renderOrder =
+  surface.renderOrder =
     10;
 
 
   const outlinePoints =
-    points.map(
+    orderedPoints.map(
       (point) =>
         new THREE.Vector3(
           point.x,
@@ -3943,11 +4244,12 @@ function createWaterSurfaceMesh(
   outline.renderOrder =
     12;
 
+
   const group =
     new THREE.Group();
 
   group.add(
-    mesh
+    surface
   );
 
   group.add(
@@ -3990,7 +4292,18 @@ function updateWaterVisualization(
         if (
           object.material
         ) {
-          object.material.dispose();
+          if (
+            Array.isArray(
+              object.material
+            )
+          ) {
+            object.material.forEach(
+              (material) =>
+                material.dispose()
+            );
+          } else {
+            object.material.dispose();
+          }
         }
       }
     );
@@ -4085,7 +4398,7 @@ function updateWaterVisualization(
 
 
 /* --------------------------------------------------
-   LABELS AND READOUTS
+   READOUTS
 -------------------------------------------------- */
 
 function clearBasinLabels() {
@@ -4110,7 +4423,10 @@ function updateBasinLabels(
   clearBasinLabels();
 
   labelGroup.visible =
-    $("showWaterLabels").checked;
+    isChecked(
+      "showWaterLabels",
+      true
+    );
 
   if (
     !labelGroup.visible
@@ -4181,57 +4497,108 @@ function updateBasinLabels(
 function updateReadouts(
   result
 ) {
-  $("terrainAreaReadout").textContent =
-    `${formatNumber(
-      result.terrainAreaM2,
-      0
-    )} m²`;
+  const terrainArea =
+    $("terrainAreaReadout");
 
-  $("effectiveRainfallReadout").textContent =
-    `${formatNumber(
-      result.rainfallLPerM2,
-      1
-    )} / ${formatNumber(
-      result.rainfallDepthM * 1000,
-      1
-    )} mm`;
+  if (terrainArea) {
+    terrainArea.textContent =
+      `${formatNumber(
+        result.terrainAreaM2,
+        0
+      )} m²`;
+  }
 
-  $("rainfallVolumeReadout").textContent =
-    formatVolume(
-      result.totalRainfallM3
-    );
 
-  $("retainedVolumeReadout").textContent =
-    formatVolume(
-      result.retainedVolumeM3
-    );
+  const rainfall =
+    $("effectiveRainfallReadout");
 
-  $("runoffVolumeReadout").textContent =
-    formatVolume(
-      result.runoffVolumeM3
-    );
+  if (rainfall) {
+    rainfall.textContent =
+      `${formatNumber(
+        result.rainfallLPerM2,
+        1
+      )} / ${formatNumber(
+        result.rainfallDepthM * 1000,
+        1
+      )} mm`;
+  }
 
-  $("retentionPercentReadout").textContent =
-    `${formatNumber(
-      result.retentionPercent,
-      1
-    )} %`;
 
-  $("waterLevelReadout").textContent =
-    `${formatNumber(
-      result.maximumWaterLevel,
-      2
-    )} m`;
+  const totalRainfall =
+    $("rainfallVolumeReadout");
 
-  $("wetAreaReadout").textContent =
-    `${formatNumber(
-      result.wetAreaM2,
-      0
-    )} m²`;
+  if (totalRainfall) {
+    totalRainfall.textContent =
+      formatVolume(
+        result.totalRainfallM3
+      );
+  }
+
+
+  const retained =
+    $("retainedVolumeReadout");
+
+  if (retained) {
+    retained.textContent =
+      formatVolume(
+        result.retainedVolumeM3
+      );
+  }
+
+
+  const runoff =
+    $("runoffVolumeReadout");
+
+  if (runoff) {
+    runoff.textContent =
+      formatVolume(
+        result.runoffVolumeM3
+      );
+  }
+
+
+  const percentage =
+    $("retentionPercentReadout");
+
+  if (percentage) {
+    percentage.textContent =
+      `${formatNumber(
+        result.retentionPercent,
+        1
+      )} %`;
+  }
+
+
+  const waterLevel =
+    $("waterLevelReadout");
+
+  if (waterLevel) {
+    waterLevel.textContent =
+      `${formatNumber(
+        result.maximumWaterLevel,
+        2
+      )} m`;
+  }
+
+
+  const wetArea =
+    $("wetAreaReadout");
+
+  if (wetArea) {
+    wetArea.textContent =
+      `${formatNumber(
+        result.wetAreaM2,
+        0
+      )} m²`;
+  }
 
 
   const basinReadout =
     $("basinReadout");
+
+  if (!basinReadout) {
+    return;
+  }
 
   basinReadout.innerHTML =
     "";
@@ -4251,6 +4618,7 @@ function updateReadouts(
 
     return;
   }
+
 
   visibleBasins
     .slice(
@@ -4307,17 +4675,55 @@ function updateReadouts(
 
 
 function updateTerrainName() {
-  const name =
-    currentTerrainName ||
-    "UNNAMED TERRAIN";
+  const terrainName =
+    $("terrainNameReadout");
 
-  $("terrainNameReadout").textContent =
-    name.toUpperCase();
+  if (terrainName) {
+    terrainName.textContent =
+      currentTerrainName.toUpperCase();
+  }
 
-  $("terrainStatus").textContent =
-    name.toUpperCase();
+  const terrainStatus =
+    $("terrainStatus");
+
+  if (terrainStatus) {
+    terrainStatus.textContent =
+      currentTerrainName.toUpperCase();
+  }
 }
 
+
+function renderResult(result) {
+  if (
+    !result
+  ) {
+    return;
+  }
+
+  currentResult =
+    result;
+
+  updateWaterVisualization(
+    result
+  );
+
+  updateBasinLabels(
+    result
+  );
+
+  updateReadouts(
+    result
+  );
+
+  updateFlowParticles();
+  updateFlowVisibility();
+  updateTerrainName();
+}
+
+
+/* --------------------------------------------------
+   CAMERA
+-------------------------------------------------- */
 
 function updateVerticalDisplayScale() {
   if (
@@ -4397,36 +4803,6 @@ function frameCamera() {
     horizontalSize * 8;
 
   controls.update();
-}
-
-
-function renderResult(
-  result
-) {
-  if (
-    !result
-  ) {
-    return;
-  }
-
-  currentResult =
-    result;
-
-  updateWaterVisualization(
-    result
-  );
-
-  updateBasinLabels(
-    result
-  );
-
-  updateReadouts(
-    result
-  );
-
-  updateFlowVisibility();
-  updateFlowParticles();
-  updateTerrainName();
 }
 
 
@@ -4979,6 +5355,7 @@ function rebuildFlowVisualization() {
       tube
     );
 
+
     if (
       flowParticleData.length < 260
     ) {
@@ -5006,50 +5383,51 @@ function rebuildFlowVisualization() {
   }
 
 
-  const particleGeometry =
-    new THREE.SphereGeometry(
-      Math.max(
-        0.9,
-        Math.min(
-          terrainState.cellWidthM,
-          terrainState.cellDepthM
-        ) * 0.13
-      ),
-      8,
-      6
-    );
+  if (
+    flowParticleData.length > 0
+  ) {
+    const particleGeometry =
+      new THREE.SphereGeometry(
+        Math.max(
+          0.9,
+          Math.min(
+            terrainState.cellWidthM,
+            terrainState.cellDepthM
+          ) * 0.13
+        ),
+        8,
+        6
+      );
 
-  const particleMaterial =
-    new THREE.MeshBasicMaterial({
-      color: 0xa4c9db,
-      transparent: true,
-      opacity: 0.9,
-      depthTest: false,
-      depthWrite: false
-    });
+    const particleMaterial =
+      new THREE.MeshBasicMaterial({
+        color: 0xa4c9db,
+        transparent: true,
+        opacity: 0.9,
+        depthTest: false,
+        depthWrite: false
+      });
 
-  flowParticleMesh =
-    new THREE.InstancedMesh(
-      particleGeometry,
-      particleMaterial,
-      Math.max(
-        1,
+    flowParticleMesh =
+      new THREE.InstancedMesh(
+        particleGeometry,
+        particleMaterial,
         flowParticleData.length
-      )
+      );
+
+    flowParticleMesh.name =
+      "moving-flow-particles";
+
+    flowParticleMesh.frustumCulled =
+      false;
+
+    flowParticleMesh.renderOrder =
+      25;
+
+    flowGroup.add(
+      flowParticleMesh
     );
-
-  flowParticleMesh.name =
-    "moving-flow-particles";
-
-  flowParticleMesh.frustumCulled =
-    false;
-
-  flowParticleMesh.renderOrder =
-    25;
-
-  flowGroup.add(
-    flowParticleMesh
-  );
+  }
 
   updateFlowVisibility();
 }
@@ -5063,7 +5441,10 @@ function updateFlowVisibility() {
   }
 
   flowGroup.visible =
-    $("showFlow").checked;
+    isChecked(
+      "showFlow",
+      true
+    );
 }
 
 
@@ -5075,7 +5456,10 @@ function updateFlowParticles() {
   }
 
   const visible =
-    $("showFlow").checked &&
+    isChecked(
+      "showFlow",
+      true
+    ) &&
     displayedRainfall > 0.0001;
 
   flowParticleMesh.visible =
@@ -5109,7 +5493,6 @@ function updateFlowParticles() {
   const time =
     performance.now() /
     1000;
-
 
   flowParticleMesh.count =
     flowParticleData.length;
@@ -5149,31 +5532,6 @@ function updateFlowParticles() {
 
   flowParticleMesh.instanceMatrix.needsUpdate =
     true;
-}
-
-
-/* --------------------------------------------------
-   CAMERA / ANIMATION
--------------------------------------------------- */
-
-function animate() {
-  requestAnimationFrame(
-    animate
-  );
-
-  updateFlowParticles();
-
-  controls.update();
-
-  renderer.render(
-    scene,
-    camera
-  );
-
-  labelRenderer.render(
-    scene,
-    camera
-  );
 }
 
 
@@ -5262,31 +5620,6 @@ function makeDesignSnapshot(
 }
 
 
-function escapeHtml(value) {
-  return String(value)
-    .replaceAll(
-      "&",
-      "&amp;"
-    )
-    .replaceAll(
-      "<",
-      "&lt;"
-    )
-    .replaceAll(
-      ">",
-      "&gt;"
-    )
-    .replaceAll(
-      '"',
-      "&quot;"
-    )
-    .replaceAll(
-      "'",
-      "&#039;"
-    );
-}
-
-
 function storeCurrentDesign() {
   if (
     !terrainState ||
@@ -5295,14 +5628,19 @@ function storeCurrentDesign() {
     return;
   }
 
+  const input =
+    $("designName");
+
   const name =
-    $("designName").value.trim() ||
-    `Design ${String(
-      storedDesigns.length + 1
-    ).padStart(
-      2,
-      "0"
-    )}`;
+    input &&
+    input.value.trim()
+      ? input.value.trim()
+      : `Design ${String(
+          storedDesigns.length + 1
+        ).padStart(
+          2,
+          "0"
+        )}`;
 
   storedDesigns.push(
     makeDesignSnapshot(
@@ -5322,6 +5660,12 @@ function storeCurrentDesign() {
 function renderDesignComparison() {
   const container =
     $("designComparisonTable");
+
+  if (
+    !container
+  ) {
+    return;
+  }
 
   container.innerHTML =
     "";
@@ -5426,235 +5770,7 @@ function renderDesignComparison() {
 
 
 /* --------------------------------------------------
-   FILE EXPORT HELPERS
--------------------------------------------------- */
-
-function downloadBlob(
-  data,
-  filename,
-  mimeType
-) {
-  const blob =
-    data instanceof Blob
-      ? data
-      : new Blob(
-          [data],
-          {
-            type:
-              mimeType
-          }
-        );
-
-  const url =
-    URL.createObjectURL(
-      blob
-    );
-
-  const link =
-    document.createElement(
-      "a"
-    );
-
-  link.href =
-    url;
-
-  link.download =
-    filename;
-
-  link.style.display =
-    "none";
-
-  document.body.appendChild(
-    link
-  );
-
-  link.click();
-
-  window.setTimeout(
-    () => {
-      link.remove();
-      URL.revokeObjectURL(
-        url
-      );
-    },
-    1000
-  );
-}
-
-
-function csvEscape(
-  value
-) {
-  const stringValue =
-    value === null ||
-    value === undefined
-      ? ""
-      : String(value);
-
-  if (
-    stringValue.includes(",") ||
-    stringValue.includes('"') ||
-    stringValue.includes("\n")
-  ) {
-    return `"${stringValue.replaceAll(
-      '"',
-      '""'
-    )}"`;
-  }
-
-  return stringValue;
-}
-
-
-/* --------------------------------------------------
-   CSV EXPORT
--------------------------------------------------- */
-
-function downloadRetentionCsv() {
-  if (
-    !terrainState ||
-    !currentResult
-  ) {
-    alert(
-      "There is no terrain loaded."
-    );
-
-    return;
-  }
-
-  const currentName =
-    $("designName").value.trim() ||
-    "CURRENT DESIGN";
-
-  const designs =
-    [
-      ...storedDesigns,
-      makeDesignSnapshot(
-        currentName,
-        currentResult
-      )
-    ];
-
-  const rows =
-    [];
-
-  rows.push([
-    "record_type",
-    "design",
-    "topography",
-    "rainfall_L_per_m2",
-    "rainfall_mm",
-    "projected_area_m2",
-    "total_rainfall_m3",
-    "total_rainfall_l",
-    "retained_volume_m3",
-    "retained_volume_l",
-    "runoff_volume_m3",
-    "runoff_volume_l",
-    "retention_percent",
-    "basin_index",
-    "basin_area_m2",
-    "basin_max_depth_m",
-    "basin_water_level_m",
-    "basin_inflow_m3",
-    "basin_retained_m3",
-    "basin_spill_m3",
-    "basin_retained_l",
-    "centroid_x_m",
-    "centroid_y_m",
-    "centroid_z_m"
-  ]);
-
-
-  for (
-    const design of designs
-  ) {
-    rows.push([
-      "summary",
-      design.name,
-      design.terrainName,
-      design.rainfallLPerM2,
-      design.rainfallLPerM2,
-      design.terrainAreaM2,
-      design.totalRainfallM3,
-      design.totalRainfallL,
-      design.retainedVolumeM3,
-      design.retainedVolumeL,
-      design.runoffVolumeM3,
-      design.runoffVolumeL,
-      design.retentionPercent,
-      "",
-      "",
-      "",
-      "",
-      "",
-      "",
-      "",
-      "",
-      "",
-      ""
-    ]);
-
-
-    design.basins.forEach(
-      (basin) => {
-        rows.push([
-          "basin",
-          design.name,
-          design.terrainName,
-          design.rainfallLPerM2,
-          design.rainfallLPerM2,
-          design.terrainAreaM2,
-          "",
-          "",
-          "",
-          "",
-          "",
-          "",
-          "",
-          basin.basinIndex,
-          basin.areaM2,
-          basin.maximumDepthM,
-          basin.waterLevel,
-          basin.inflowVolumeM3,
-          basin.retainedVolumeM3,
-          basin.spillVolumeM3,
-          basin.retainedVolumeL,
-          basin.x,
-          basin.y,
-          basin.z
-        ]);
-      }
-    );
-  }
-
-
-  const csv =
-    rows
-      .map(
-        (row) =>
-          row
-            .map(
-              csvEscape
-            )
-            .join(",")
-      )
-      .join("\n");
-
-  downloadBlob(
-    csv,
-    "rainwater-retention.csv",
-    "text/csv;charset=utf-8"
-  );
-
-  setStatus(
-    "CSV DOWNLOADED"
-  );
-}
-
-
-/* --------------------------------------------------
-   WATER VOLUME EXPORT
+   WATER EXPORT GEOMETRY
 -------------------------------------------------- */
 
 function addWaterVertex(
@@ -5772,10 +5888,7 @@ function buildWaterVolumeMesh(
 
 
   const isWet =
-    (
-      x,
-      z
-    ) => {
+    (x, z) => {
       if (
         x < 0 ||
         x >= result.resolution ||
@@ -5798,10 +5911,7 @@ function buildWaterVolumeMesh(
 
 
   const getWaterTop =
-    (
-      x,
-      z
-    ) => {
+    (x, z) => {
       if (
         !isWet(
           x,
@@ -6099,47 +6209,25 @@ function buildWaterVolumeMesh(
 }
 
 
-function serializePly(
-  mesh
-) {
+function serializePly(mesh) {
   const lines =
     [];
 
-  lines.push(
-    "ply"
-  );
-
-  lines.push(
-    "format ascii 1.0"
-  );
-
+  lines.push("ply");
+  lines.push("format ascii 1.0");
   lines.push(
     `element vertex ${mesh.vertices.length / 3}`
   );
-
-  lines.push(
-    "property float x"
-  );
-
-  lines.push(
-    "property float y"
-  );
-
-  lines.push(
-    "property float z"
-  );
-
+  lines.push("property float x");
+  lines.push("property float y");
+  lines.push("property float z");
   lines.push(
     `element face ${mesh.triangles.length}`
   );
-
   lines.push(
     "property list uchar int vertex_indices"
   );
-
-  lines.push(
-    "end_header"
-  );
+  lines.push("end_header");
 
 
   for (
@@ -6165,15 +6253,11 @@ function serializePly(
     );
   }
 
-  return lines.join(
-    "\n"
-  );
+  return lines.join("\n");
 }
 
 
-function serializeStl(
-  mesh
-) {
+function serializeStl(mesh) {
   const triangleCount =
     mesh.triangles.length;
 
@@ -6191,6 +6275,7 @@ function serializeStl(
 
   const header =
     "Rainwater retention volume";
+
 
   for (
     let index = 0;
@@ -6348,6 +6433,63 @@ function serializeStl(
   }
 
   return buffer;
+}
+
+
+/* --------------------------------------------------
+   EXPORTS
+-------------------------------------------------- */
+
+function downloadBlob(
+  data,
+  filename,
+  mimeType
+) {
+  const blob =
+    data instanceof Blob
+      ? data
+      : new Blob(
+          [data],
+          {
+            type:
+              mimeType
+          }
+        );
+
+  const url =
+    URL.createObjectURL(
+      blob
+    );
+
+  const link =
+    document.createElement(
+      "a"
+    );
+
+  link.href =
+    url;
+
+  link.download =
+    filename;
+
+  link.style.display =
+    "none";
+
+  document.body.appendChild(
+    link
+  );
+
+  link.click();
+
+  window.setTimeout(
+    () => {
+      link.remove();
+      URL.revokeObjectURL(
+        url
+      );
+    },
+    1000
+  );
 }
 
 
@@ -6582,239 +6724,151 @@ function downloadViewerPng() {
 }
 
 
-/* --------------------------------------------------
-   MODEL LOADING
--------------------------------------------------- */
-
-function collectTrianglesFromObject(
-  root
-) {
-  const triangles =
-    [];
-
-  root.updateMatrixWorld(
-    true
-  );
-
-  root.traverse(
-    (child) => {
-      if (
-        !child.isMesh ||
-        !child.geometry ||
-        !child.geometry.attributes ||
-        !child.geometry.attributes.position
-      ) {
-        return;
-      }
-
-      const geometry =
-        child.geometry;
-
-      const position =
-        geometry.attributes.position;
-
-      const index =
-        geometry.index;
-
-      const matrixWorld =
-        child.matrixWorld;
-
-
-      const readVertex =
-        (vertexIndex) => {
-          const vector =
-            new THREE.Vector3();
-
-          vector.fromBufferAttribute(
-            position,
-            vertexIndex
-          );
-
-          vector.applyMatrix4(
-            matrixWorld
-          );
-
-          return [
-            vector.x,
-            vector.y,
-            vector.z
-          ];
-        };
-
-
-      if (
-        index
-      ) {
-        for (
-          let i = 0;
-          i < index.count;
-          i += 3
-        ) {
-          triangles.push([
-            readVertex(
-              index.getX(i)
-            ),
-
-            readVertex(
-              index.getX(i + 1)
-            ),
-
-            readVertex(
-              index.getX(i + 2)
-            )
-          ]);
-        }
-      } else {
-        for (
-          let i = 0;
-          i < position.count;
-          i += 3
-        ) {
-          triangles.push([
-            readVertex(i),
-            readVertex(i + 1),
-            readVertex(i + 2)
-          ]);
-        }
-      }
-    }
-  );
-
-  return triangles;
-}
-
-
-async function loadModelFile(
-  file
-) {
-  const filename =
-    file.name.toLowerCase();
-
-  const extension =
-    filename.split(".").pop();
-
+function downloadRetentionCsv() {
   if (
-    ![
-      "ply",
-      "stl",
-      "obj"
-    ].includes(
-      extension
-    )
+    !terrainState ||
+    !currentResult
   ) {
     alert(
-      "Please upload a PLY, STL or OBJ file."
+      "There is no terrain loaded."
     );
 
     return;
   }
 
-  try {
-    setStatus(
-      "LOADING MODEL"
-    );
+  const designInput =
+    $("designName");
 
-    let object;
+  const currentName =
+    designInput &&
+    designInput.value.trim()
+      ? designInput.value.trim()
+      : "CURRENT DESIGN";
+
+  const designs =
+    [
+      ...storedDesigns,
+      makeDesignSnapshot(
+        currentName,
+        currentResult
+      )
+    ];
+
+  const rows =
+    [];
+
+  rows.push([
+    "record_type",
+    "design",
+    "topography",
+    "rainfall_L_per_m2",
+    "rainfall_mm",
+    "projected_area_m2",
+    "total_rainfall_m3",
+    "total_rainfall_l",
+    "retained_volume_m3",
+    "retained_volume_l",
+    "runoff_volume_m3",
+    "runoff_volume_l",
+    "retention_percent",
+    "basin_index",
+    "basin_area_m2",
+    "basin_max_depth_m",
+    "basin_water_level_m",
+    "basin_inflow_m3",
+    "basin_retained_m3",
+    "basin_spill_m3",
+    "basin_retained_l",
+    "centroid_x_m",
+    "centroid_y_m",
+    "centroid_z_m"
+  ]);
 
 
-    if (
-      extension === "obj"
-    ) {
-      const text =
-        await file.text();
+  for (
+    const design of designs
+  ) {
+    rows.push([
+      "summary",
+      design.name,
+      design.terrainName,
+      design.rainfallLPerM2,
+      design.rainfallLPerM2,
+      design.terrainAreaM2,
+      design.totalRainfallM3,
+      design.totalRainfallL,
+      design.retainedVolumeM3,
+      design.retainedVolumeL,
+      design.runoffVolumeM3,
+      design.runoffVolumeL,
+      design.retentionPercent,
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      ""
+    ]);
 
-      object =
-        new OBJLoader().parse(
-          text
-        );
-    } else {
-      const buffer =
-        await file.arrayBuffer();
 
-      let geometry;
-
-      if (
-        extension === "ply"
-      ) {
-        geometry =
-          new PLYLoader().parse(
-            buffer
-          );
-      } else {
-        geometry =
-          new STLLoader().parse(
-            buffer
-          );
+    design.basins.forEach(
+      (basin) => {
+        rows.push([
+          "basin",
+          design.name,
+          design.terrainName,
+          design.rainfallLPerM2,
+          design.rainfallLPerM2,
+          design.terrainAreaM2,
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          basin.basinIndex,
+          basin.areaM2,
+          basin.maximumDepthM,
+          basin.waterLevel,
+          basin.inflowVolumeM3,
+          basin.retainedVolumeM3,
+          basin.spillVolumeM3,
+          basin.retainedVolumeL,
+          basin.x,
+          basin.y,
+          basin.z
+        ]);
       }
-
-      if (
-        !geometry.attributes.normal
-      ) {
-        geometry.computeVertexNormals();
-      }
-
-      object =
-        new THREE.Mesh(
-          geometry
-        );
-    }
-
-
-    const triangles =
-      collectTrianglesFromObject(
-        object
-      );
-
-    if (
-      triangles.length === 0
-    ) {
-      throw new Error(
-        "No triangles were found in the model."
-      );
-    }
-
-    rawTriangles =
-      triangles;
-
-    proceduralSeed =
-      null;
-
-    currentTerrainName =
-      file.name.replace(
-        /\.[^/.]+$/,
-        ""
-      );
-
-    $("designName").value =
-      currentTerrainName;
-
-    object.traverse(
-      (child) => {
-        if (
-          child.isMesh &&
-          child.geometry
-        ) {
-          child.geometry.dispose();
-        }
-      }
-    );
-
-    buildUploadedTerrain();
-
-    setStatus(
-      "READY"
-    );
-  } catch (error) {
-    console.error(error);
-
-    setStatus(
-      "MODEL ERROR"
-    );
-
-    alert(
-      `Could not load the model.\n\n${error.message}`
     );
   }
+
+
+  const csv =
+    rows
+      .map(
+        (row) =>
+          row
+            .map(
+              csvEscape
+            )
+            .join(",")
+      )
+      .join("\n");
+
+  downloadBlob(
+    csv,
+    "rainwater-retention.csv",
+    "text/csv;charset=utf-8"
+  );
+
+  setStatus(
+    "CSV DOWNLOADED"
+  );
 }
 
 
@@ -6824,11 +6878,27 @@ async function loadModelFile(
 
 initializeScene();
 bindControls();
-buildProceduralTerrain(
-  true
-);
+buildProceduralTerrain(true);
 renderDesignComparison();
 
 requestAnimationFrame(
-  animate
+  function animate() {
+    requestAnimationFrame(
+      animate
+    );
+
+    updateFlowParticles();
+
+    controls.update();
+
+    renderer.render(
+      scene,
+      camera
+    );
+
+    labelRenderer.render(
+      scene,
+      camera
+    );
+  }
 );

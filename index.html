@@ -19,7 +19,8 @@
   {
     "imports": {
       "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-      "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+      "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/",
+      "geotiff": "https://cdn.jsdelivr.net/npm/geotiff@3.0.5/+esm"
     }
   }
   </script>
@@ -48,8 +49,7 @@
           A simplified topography-based model for visualising rainfall,
           surface flow, runoff and water retention in depressions and behind
           artificial dams.
-
-          <br>
+        </p>
 
         <p class="credit">
           Developed by Dennis Häusler,
@@ -63,8 +63,6 @@
 
           Assisted by AI (GPT-5.6).
         </p>
-
-
 
 
         <details
@@ -148,12 +146,23 @@
             </section>
 
             <section>
+              <strong>MODEL IMPORT</strong>
+
+              PLY, STL and OBJ files are interpreted as 3D models with Y as
+              elevation and X/Z as the horizontal plane.
+
+              GeoTIFF, XYZ and ESRI ASCII Grid elevation files are interpreted
+              as raster terrain data. For swissALTI3D, X/Easting becomes the
+              local X coordinate, Y/Northing becomes the local Z coordinate,
+              and Z becomes elevation.
+            </section>
+
+            <section>
               <strong>MODEL SCALE</strong>
 
               Imported PLY, STL and OBJ files do not reliably contain unit
               metadata. Set model scale and metres per model unit manually.
-              The importer assumes Y is elevation and X/Z form the horizontal
-              plane.
+              GeoTIFF and XYZ elevation data are assumed to use metres.
             </section>
 
             <section>
@@ -316,10 +325,6 @@
                   title="Toggle basin labels."
                 >
               </div>
-            </div>
-
-            <div class="flow-legend">
-              BLUE = FLOW · TAUBENBLAU = RETAINED WATER
             </div>
 
           </div>
@@ -964,12 +969,12 @@
       <div
         id="dropZone"
         tabindex="0"
-        title="Drop a PLY, STL or OBJ terrain model here."
+        title="Drop a PLY, STL, OBJ, GeoTIFF, XYZ or ESRI ASCII Grid terrain file here."
       >
-        DROP 3D TERRAIN HERE
+        DROP TERRAIN DATA HERE
 
         <span>
-          PLY / STL / OBJ
+          PLY / STL / OBJ / GEOTIFF / XYZ
         </span>
       </div>
 
@@ -977,7 +982,8 @@
       <input
         id="modelFileInput"
         type="file"
-        accept=".ply,.stl,.obj"
+        accept=".ply,.stl,.obj,.tif,.tiff,.tfw,.xyz,.txt,.asc"
+        multiple
         hidden
       >
 
@@ -986,16 +992,17 @@
         id="chooseModelButton"
         class="file-button"
         type="button"
-        title="Choose a PLY, STL or OBJ terrain model."
+        title="Choose a 3D model or elevation raster."
       >
-        CHOOSE 3D MODEL
+        CHOOSE TERRAIN FILE
       </button>
 
 
       <div id="sourceHint">
-        Expected orientation: Y is vertical; X and Z are horizontal.
-        Generated terrain uses an approximately 45° maximum slope.
-        Imported models require manual scale settings.
+        PLY, STL and OBJ: Y is vertical; X and Z are horizontal.
+        GeoTIFF and XYZ files use metres. swissALTI3D X/Y/Z data are mapped
+        from LV95 coordinates into the local terrain coordinate system.
+        A matching TFW file can be selected together with a TIFF when needed.
       </div>
 
 

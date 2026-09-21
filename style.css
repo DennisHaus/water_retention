@@ -262,24 +262,6 @@ h1 {
   text-decoration: underline;
 }
 
-.detailed-link {
-  display: inline-block;
-  margin-top: 13px;
-
-  border-bottom: 1px dotted #7b858a;
-
-  color: #d8dcde;
-
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-decoration: none;
-}
-
-.detailed-link:hover {
-  color: #ffffff;
-}
-
 .description-details {
   margin-top: 12px;
 }
@@ -474,14 +456,6 @@ label {
   font-size: 9px;
   line-height: 1.4;
   letter-spacing: 0.025em;
-}
-
-.flow-legend {
-  color: var(--flow-blue);
-
-  font-size: 9px;
-  line-height: 1.4;
-  letter-spacing: 0.04em;
 }
 
 

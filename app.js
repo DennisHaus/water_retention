@@ -33,6 +33,10 @@ import {
   LineMaterial
 } from "three/addons/lines/LineMaterial.js";
 
+import {
+  fromArrayBuffer as fromGeoTiffArrayBuffer
+} from "geotiff";
+
 
 /* =========================================================
    HELPERS
@@ -351,6 +355,9 @@ const MAX_PROCEDURAL_SLOPE_RATIO =
 const BASIN_SIGNIFICANCE_RATIO =
   0.05;
 
+const MAX_IMPORTED_RASTER_SIZE =
+  512;
+
 
 /* =========================================================
    MINIMUM HEAP
@@ -490,6 +497,9 @@ let terrainState =
   null;
 
 let rawTriangles =
+  null;
+
+let rawRasterTerrain =
   null;
 
 let currentResult =
@@ -1022,6 +1032,10 @@ function bindControls() {
         rawTriangles.length > 0
       ) {
         buildUploadedTerrain();
+      } else if (
+        rawRasterTerrain
+      ) {
+        buildImportedRasterTerrain();
       } else {
         buildProceduralTerrain(
           false
@@ -1164,6 +1178,9 @@ function bindControls() {
     "newTerrainButton",
     () => {
       rawTriangles =
+        null;
+
+      rawRasterTerrain =
         null;
 
       buildProceduralTerrain(
@@ -1333,12 +1350,14 @@ function bindControls() {
           "drag-over"
         );
 
-        const file =
-          event.dataTransfer.files[0];
+        const files =
+          Array.from(
+            event.dataTransfer.files
+          );
 
-        if (file) {
-          await loadModelFile(
-            file
+        if (files.length > 0) {
+          await loadTerrainFiles(
+            files
           );
         }
       }
@@ -1353,12 +1372,14 @@ function bindControls() {
     modelInput.addEventListener(
       "change",
       async (event) => {
-        const file =
-          event.target.files[0];
+        const files =
+          Array.from(
+            event.target.files
+          );
 
-        if (file) {
-          await loadModelFile(
-            file
+        if (files.length > 0) {
+          await loadTerrainFiles(
+            files
           );
         }
 
@@ -2034,6 +2055,1505 @@ function enforceMaximumSlope(
 
 
 /* =========================================================
+   RASTER TERRAIN IMPORT
+========================================================= */
+
+function rasterValueIsValid(
+  value,
+  nodata
+) {
+  if (
+    !Number.isFinite(
+      value
+    )
+  ) {
+    return false;
+  }
+
+  if (
+    Number.isFinite(
+      nodata
+    ) &&
+    Math.abs(
+      value - nodata
+    ) <
+      0.000001
+  ) {
+    return false;
+  }
+
+  return true;
+}
+
+
+function fillMissingRasterValues(
+  values,
+  width,
+  height
+) {
+  const queue =
+    new Int32Array(
+      values.length
+    );
+
+  let head =
+    0;
+
+  let tail =
+    0;
+
+
+  for (
+    let index = 0;
+    index < values.length;
+    index++
+  ) {
+    if (
+      Number.isFinite(
+        values[index]
+      )
+    ) {
+      queue[tail++] =
+        index;
+    }
+  }
+
+
+  if (
+    tail === 0
+  ) {
+    throw new Error(
+      "The raster contains no valid elevation values."
+    );
+  }
+
+
+  while (
+    head < tail
+  ) {
+    const index =
+      queue[head++];
+
+    const x =
+      index %
+      width;
+
+    const z =
+      Math.floor(
+        index /
+        width
+      );
+
+    const neighbours = [
+      [x - 1, z],
+      [x + 1, z],
+      [x, z - 1],
+      [x, z + 1]
+    ];
+
+    neighbours.forEach(
+      ([nextX, nextZ]) => {
+        if (
+          nextX < 0 ||
+          nextX >= width ||
+          nextZ < 0 ||
+          nextZ >= height
+        ) {
+          return;
+        }
+
+        const nextIndex =
+          nextZ *
+          width +
+          nextX;
+
+        if (
+          Number.isFinite(
+            values[nextIndex]
+          )
+        ) {
+          return;
+        }
+
+        values[nextIndex] =
+          values[index];
+
+        queue[tail++] =
+          nextIndex;
+      }
+    );
+  }
+}
+
+
+function makeRasterSource({
+  values,
+  gridWidth,
+  gridHeight,
+  minX,
+  minZ,
+  widthM,
+  depthM,
+  nodata = null,
+  reverseRows = false,
+  reverseColumns = false
+}) {
+  if (
+    gridWidth < 2 ||
+    gridHeight < 2
+  ) {
+    throw new Error(
+      "The raster must contain at least two rows and two columns."
+    );
+  }
+
+  const orientedValues =
+    new Float32Array(
+      gridWidth *
+      gridHeight
+    );
+
+  orientedValues.fill(
+    NaN
+  );
+
+
+  for (
+    let row = 0;
+    row < gridHeight;
+    row++
+  ) {
+    for (
+      let column = 0;
+      column < gridWidth;
+      column++
+    ) {
+      const sourceIndex =
+        row *
+        gridWidth +
+        column;
+
+      const value =
+        Number(
+          values[sourceIndex]
+        );
+
+      const destinationColumn =
+        reverseColumns
+          ? gridWidth - 1 - column
+          : column;
+
+      const destinationRow =
+        reverseRows
+          ? gridHeight - 1 - row
+          : row;
+
+      const destinationIndex =
+        destinationRow *
+        gridWidth +
+        destinationColumn;
+
+      orientedValues[destinationIndex] =
+        rasterValueIsValid(
+          value,
+          nodata
+        )
+          ? value
+          : NaN;
+    }
+  }
+
+
+  fillMissingRasterValues(
+    orientedValues,
+    gridWidth,
+    gridHeight
+  );
+
+
+  return {
+    values:
+      orientedValues,
+
+    gridWidth,
+
+    gridHeight,
+
+    minX,
+
+    minZ,
+
+    widthM:
+      Math.abs(
+        widthM
+      ),
+
+    depthM:
+      Math.abs(
+        depthM
+      )
+  };
+}
+
+
+function sampleRasterGrid(
+  source,
+  gridX,
+  gridZ
+) {
+  const safeX =
+    clamp(
+      gridX,
+      0,
+      source.gridWidth - 1
+    );
+
+  const safeZ =
+    clamp(
+      gridZ,
+      0,
+      source.gridHeight - 1
+    );
+
+  const x0 =
+    Math.floor(
+      safeX
+    );
+
+  const z0 =
+    Math.floor(
+      safeZ
+    );
+
+  const x1 =
+    Math.min(
+      x0 + 1,
+      source.gridWidth - 1
+    );
+
+  const z1 =
+    Math.min(
+      z0 + 1,
+      source.gridHeight - 1
+    );
+
+  const fx =
+    safeX - x0;
+
+  const fz =
+    safeZ - z0;
+
+  const values = [
+    {
+      value:
+        source.values[
+          z0 *
+          source.gridWidth +
+          x0
+        ],
+
+      weight:
+        (1 - fx) *
+        (1 - fz)
+    },
+
+    {
+      value:
+        source.values[
+          z0 *
+          source.gridWidth +
+          x1
+        ],
+
+      weight:
+        fx *
+        (1 - fz)
+    },
+
+    {
+      value:
+        source.values[
+          z1 *
+          source.gridWidth +
+          x0
+        ],
+
+      weight:
+        (1 - fx) *
+        fz
+    },
+
+    {
+      value:
+        source.values[
+          z1 *
+          source.gridWidth +
+          x1
+        ],
+
+      weight:
+        fx *
+        fz
+    }
+  ];
+
+  let weighted =
+    0;
+
+  let totalWeight =
+    0;
+
+  values.forEach(
+    (entry) => {
+      if (
+        !Number.isFinite(
+          entry.value
+        )
+      ) {
+        return;
+      }
+
+      weighted +=
+        entry.value *
+        entry.weight;
+
+      totalWeight +=
+        entry.weight;
+    }
+  );
+
+  if (
+    totalWeight <=
+    0.000001
+  ) {
+    return 0;
+  }
+
+  return weighted /
+    totalWeight;
+}
+
+
+function resampleRasterTerrain(
+  source,
+  resolution
+) {
+  const heights =
+    new Float32Array(
+      resolution *
+      resolution
+    );
+
+
+  for (
+    let z = 0;
+    z < resolution;
+    z++
+  ) {
+    for (
+      let x = 0;
+      x < resolution;
+      x++
+    ) {
+      const sourceX =
+        (
+          (
+            x + 0.5
+          ) /
+          resolution
+        ) *
+        source.gridWidth -
+        0.5;
+
+      const sourceZ =
+        (
+          (
+            z + 0.5
+          ) /
+          resolution
+        ) *
+        source.gridHeight -
+        0.5;
+
+      heights[
+        z *
+        resolution +
+        x
+      ] =
+        sampleRasterGrid(
+          source,
+          sourceX,
+          sourceZ
+        );
+    }
+  }
+
+
+  let minimumHeight =
+    Infinity;
+
+  for (
+    let index = 0;
+    index < heights.length;
+    index++
+  ) {
+    minimumHeight =
+      Math.min(
+        minimumHeight,
+        heights[index]
+      );
+  }
+
+  if (
+    !Number.isFinite(
+      minimumHeight
+    )
+  ) {
+    throw new Error(
+      "The raster contains no usable elevation data."
+    );
+  }
+
+  for (
+    let index = 0;
+    index < heights.length;
+    index++
+  ) {
+    heights[index] -=
+      minimumHeight;
+  }
+
+
+  return {
+    heights,
+    resolution,
+    widthM:
+      source.widthM,
+    depthM:
+      source.depthM
+  };
+}
+
+
+function forEachXYZRecord(
+  text,
+  callback
+) {
+  const linePattern =
+    /[^\r\n]+/g;
+
+  let match;
+
+  while (
+    (
+      match =
+        linePattern.exec(
+          text
+        )
+    ) !== null
+  ) {
+    const line =
+      match[0]
+        .trim();
+
+    if (
+      line.length === 0 ||
+      line.startsWith("#")
+    ) {
+      continue;
+    }
+
+    const parts =
+      line
+        .replace(
+          /[,;]+/g,
+          " "
+        )
+        .trim()
+        .split(
+          /\s+/
+        );
+
+    if (
+      parts.length < 3
+    ) {
+      continue;
+    }
+
+    const x =
+      Number(
+        parts[0]
+      );
+
+    const y =
+      Number(
+        parts[1]
+      );
+
+    const z =
+      Number(
+        parts[2]
+      );
+
+    if (
+      !Number.isFinite(x) ||
+      !Number.isFinite(y) ||
+      !Number.isFinite(z)
+    ) {
+      continue;
+    }
+
+    callback(
+      x,
+      y,
+      z
+    );
+  }
+}
+
+
+function parseXYZRaster(
+  text
+) {
+  let minimumX =
+    Infinity;
+
+  let maximumX =
+    -Infinity;
+
+  let minimumY =
+    Infinity;
+
+  let maximumY =
+    -Infinity;
+
+  let recordCount =
+    0;
+
+
+  forEachXYZRecord(
+    text,
+    (x, y) => {
+      minimumX =
+        Math.min(
+          minimumX,
+          x
+        );
+
+      maximumX =
+        Math.max(
+          maximumX,
+          x
+        );
+
+      minimumY =
+        Math.min(
+          minimumY,
+          y
+        );
+
+      maximumY =
+        Math.max(
+          maximumY,
+          y
+        );
+
+      recordCount++;
+    }
+  );
+
+
+  if (
+    recordCount === 0 ||
+    !Number.isFinite(minimumX) ||
+    !Number.isFinite(maximumX) ||
+    !Number.isFinite(minimumY) ||
+    !Number.isFinite(maximumY)
+  ) {
+    throw new Error(
+      "No valid X Y Z records were found."
+    );
+  }
+
+
+  const widthM =
+    maximumX -
+    minimumX;
+
+  const depthM =
+    maximumY -
+    minimumY;
+
+  if (
+    widthM <= 0 ||
+    depthM <= 0
+  ) {
+    throw new Error(
+      "The XYZ data does not have a usable horizontal extent."
+    );
+  }
+
+
+  const requestedResolution =
+    clamp(
+      Math.round(
+        numberValue(
+          "terrainResolution"
+        )
+      ) || 180,
+      64,
+      MAX_IMPORTED_RASTER_SIZE
+    );
+
+  const aspect =
+    widthM /
+    depthM;
+
+  const gridWidth =
+    clamp(
+      Math.round(
+        requestedResolution *
+        Math.sqrt(
+          aspect
+        )
+      ),
+      64,
+      MAX_IMPORTED_RASTER_SIZE
+    );
+
+  const gridHeight =
+    clamp(
+      Math.round(
+        requestedResolution /
+        Math.sqrt(
+          aspect
+        )
+      ),
+      64,
+      MAX_IMPORTED_RASTER_SIZE
+    );
+
+  const sums =
+    new Float64Array(
+      gridWidth *
+      gridHeight
+    );
+
+  const counts =
+    new Uint32Array(
+      gridWidth *
+      gridHeight
+    );
+
+
+  forEachXYZRecord(
+    text,
+    (x, y, z) => {
+      const gridX =
+        clamp(
+          Math.floor(
+            (
+              x -
+              minimumX
+            ) /
+            widthM *
+            gridWidth
+          ),
+          0,
+          gridWidth - 1
+        );
+
+      const gridZ =
+        clamp(
+          Math.floor(
+            (
+              y -
+              minimumY
+            ) /
+            depthM *
+            gridHeight
+          ),
+          0,
+          gridHeight - 1
+        );
+
+      const index =
+        gridZ *
+        gridWidth +
+        gridX;
+
+      sums[index] +=
+        z;
+
+      counts[index]++;
+    }
+  );
+
+
+  const values =
+    new Float32Array(
+      gridWidth *
+      gridHeight
+    );
+
+  values.fill(
+    NaN
+  );
+
+
+  for (
+    let index = 0;
+    index < values.length;
+    index++
+  ) {
+    if (
+      counts[index] > 0
+    ) {
+      values[index] =
+        sums[index] /
+        counts[index];
+    }
+  }
+
+
+  return makeRasterSource({
+    values,
+    gridWidth,
+    gridHeight,
+    minX: minimumX,
+    minZ: minimumY,
+    widthM,
+    depthM,
+    reverseRows: false,
+    reverseColumns: false
+  });
+}
+
+
+function parseEsriAsciiGrid(
+  text
+) {
+  const lines =
+    text.split(
+      /\r?\n/
+    );
+
+  const header =
+    {};
+
+  let dataStart =
+    0;
+
+  for (
+    let index = 0;
+    index < Math.min(12, lines.length);
+    index++
+  ) {
+    const parts =
+      lines[index]
+        .trim()
+        .split(
+          /\s+/
+        );
+
+    if (
+      parts.length < 2
+    ) {
+      continue;
+    }
+
+    const key =
+      parts[0]
+        .toLowerCase();
+
+    const value =
+      Number(
+        parts[1]
+      );
+
+    if (
+      [
+        "ncols",
+        "nrows",
+        "xllcorner",
+        "yllcorner",
+        "xllcenter",
+        "yllcenter",
+        "cellsize",
+        "nodata_value"
+      ].includes(
+        key
+      )
+    ) {
+      header[key] =
+        value;
+
+      dataStart =
+        index + 1;
+    }
+  }
+
+
+  const columns =
+    Math.round(
+      header.ncols
+    );
+
+  const rows =
+    Math.round(
+      header.nrows
+    );
+
+  const cellSize =
+    Number(
+      header.cellsize
+    );
+
+  if (
+    !Number.isFinite(columns) ||
+    !Number.isFinite(rows) ||
+    columns < 2 ||
+    rows < 2 ||
+    !Number.isFinite(cellSize) ||
+    cellSize <= 0
+  ) {
+    throw new Error(
+      "The ESRI ASCII Grid header is incomplete or invalid."
+    );
+  }
+
+
+  const xll =
+    Number.isFinite(
+      header.xllcorner
+    )
+      ? header.xllcorner
+      : header.xllcenter -
+        cellSize / 2;
+
+  const yll =
+    Number.isFinite(
+      header.yllcorner
+    )
+      ? header.yllcorner
+      : header.yllcenter -
+        cellSize / 2;
+
+  const nodata =
+    Number.isFinite(
+      header.nodata_value
+    )
+      ? header.nodata_value
+      : null;
+
+  const values =
+    new Float32Array(
+      columns *
+      rows
+    );
+
+  values.fill(
+    NaN
+  );
+
+  let valueIndex =
+    0;
+
+
+  for (
+    let lineIndex = dataStart;
+    lineIndex < lines.length;
+    lineIndex++
+  ) {
+    const parts =
+      lines[lineIndex]
+        .trim()
+        .split(
+          /\s+/
+        );
+
+    for (
+      let partIndex = 0;
+      partIndex < parts.length;
+      partIndex++
+    ) {
+      if (
+        valueIndex >= values.length
+      ) {
+        break;
+      }
+
+      const value =
+        Number(
+          parts[partIndex]
+        );
+
+      values[valueIndex++] =
+        rasterValueIsValid(
+          value,
+          nodata
+        )
+          ? value
+          : NaN;
+    }
+  }
+
+
+  return makeRasterSource({
+    values,
+    gridWidth: columns,
+    gridHeight: rows,
+    minX: xll,
+    minZ: yll,
+    widthM:
+      columns *
+      cellSize,
+    depthM:
+      rows *
+      cellSize,
+    nodata,
+    reverseRows: true,
+    reverseColumns: false
+  });
+}
+
+
+function parseWorldFile(
+  text,
+  width,
+  height
+) {
+  const values =
+    text
+      .trim()
+      .split(
+        /\s+/
+      )
+      .map(
+        Number
+      );
+
+  if (
+    values.length < 6 ||
+    values.some(
+      (value) =>
+        !Number.isFinite(value)
+    )
+  ) {
+    throw new Error(
+      "The world file is invalid."
+    );
+  }
+
+  const [
+    pixelSizeX,
+    rotationY,
+    rotationX,
+    pixelSizeY,
+    originX,
+    originY
+  ] =
+    values;
+
+  if (
+    Math.abs(rotationX) > 0.000001 ||
+    Math.abs(rotationY) > 0.000001
+  ) {
+    throw new Error(
+      "Rotated world files are not supported. Use a north-up TIFF."
+    );
+  }
+
+  const absolutePixelWidth =
+    Math.abs(
+      pixelSizeX
+    );
+
+  const absolutePixelHeight =
+    Math.abs(
+      pixelSizeY
+    );
+
+  const firstCenterX =
+    originX;
+
+  const firstCenterY =
+    originY;
+
+  const lastCenterX =
+    originX +
+    pixelSizeX *
+    (
+      width - 1
+    );
+
+  const lastCenterY =
+    originY +
+    pixelSizeY *
+    (
+      height - 1
+    );
+
+  const minimumCenterX =
+    Math.min(
+      firstCenterX,
+      lastCenterX
+    );
+
+  const maximumCenterX =
+    Math.max(
+      firstCenterX,
+      lastCenterX
+    );
+
+  const minimumCenterY =
+    Math.min(
+      firstCenterY,
+      lastCenterY
+    );
+
+  const maximumCenterY =
+    Math.max(
+      firstCenterY,
+      lastCenterY
+    );
+
+  return {
+    minX:
+      minimumCenterX -
+      absolutePixelWidth / 2,
+
+    minZ:
+      minimumCenterY -
+      absolutePixelHeight / 2,
+
+    widthM:
+      maximumCenterX -
+      minimumCenterX +
+      absolutePixelWidth,
+
+    depthM:
+      maximumCenterY -
+      minimumCenterY +
+      absolutePixelHeight,
+
+    reverseRows:
+      pixelSizeY < 0,
+
+    reverseColumns:
+      pixelSizeX < 0
+  };
+}
+
+
+function getGeoTiffNoData(
+  image
+) {
+  let value =
+    null;
+
+  if (
+    typeof image.getGDALNoData ===
+    "function"
+  ) {
+    value =
+      image.getGDALNoData();
+  }
+
+  if (
+    value === null ||
+    value === undefined
+  ) {
+    const rawValue =
+      image.fileDirectory &&
+      image.fileDirectory.GDAL_NODATA;
+
+    value =
+      rawValue;
+  }
+
+  const numericValue =
+    Number(
+      value
+    );
+
+  return Number.isFinite(
+    numericValue
+  )
+    ? numericValue
+    : null;
+}
+
+
+function getGeoTiffRasterInfo(
+  image,
+  width,
+  height
+) {
+  const fileDirectory =
+    image.fileDirectory ||
+    {};
+
+  const scale =
+    fileDirectory.ModelPixelScale;
+
+  const tiepoint =
+    fileDirectory.ModelTiepoint;
+
+  const transformation =
+    fileDirectory.ModelTransformation;
+
+  let boundingBox =
+    null;
+
+  if (
+    typeof image.getBoundingBox ===
+    "function"
+  ) {
+    try {
+      const candidate =
+        image.getBoundingBox();
+
+      if (
+        candidate &&
+        candidate.length >= 4 &&
+        candidate.every(
+          (value) =>
+            Number.isFinite(
+              Number(value)
+            )
+        )
+      ) {
+        boundingBox =
+          candidate.map(
+            Number
+          );
+      }
+    } catch (error) {
+      console.warn(
+        "Could not read GeoTIFF bounding box.",
+        error
+      );
+    }
+  }
+
+
+  if (
+    scale &&
+    tiepoint &&
+    scale.length >= 2 &&
+    tiepoint.length >= 6
+  ) {
+    const pixelWidth =
+      Number(
+        scale[0]
+      );
+
+    const pixelHeight =
+      Number(
+        scale[1]
+      );
+
+    const originX =
+      Number(
+        tiepoint[3]
+      );
+
+    const originY =
+      Number(
+        tiepoint[4]
+      );
+
+    const fallbackWidth =
+      Math.abs(
+        pixelWidth
+      ) *
+      width;
+
+    const fallbackDepth =
+      Math.abs(
+        pixelHeight
+      ) *
+      height;
+
+    return {
+      minX:
+        boundingBox
+          ? boundingBox[0]
+          : Math.min(
+              originX,
+              originX +
+              pixelWidth *
+              width
+            ),
+
+      minZ:
+        boundingBox
+          ? boundingBox[1]
+          : Math.min(
+              originY,
+              originY -
+              Math.abs(
+                pixelHeight
+              ) *
+              height
+            ),
+
+      widthM:
+        boundingBox
+          ? boundingBox[2] -
+            boundingBox[0]
+          : fallbackWidth,
+
+      depthM:
+        boundingBox
+          ? boundingBox[3] -
+            boundingBox[1]
+          : fallbackDepth,
+
+      reverseRows:
+        pixelHeight >= 0,
+
+      reverseColumns:
+        pixelWidth < 0,
+
+      hasGeoreferencing:
+        true
+    };
+  }
+
+
+  if (
+    transformation &&
+    transformation.length >= 16
+  ) {
+    const pixelWidth =
+      Number(
+        transformation[0]
+      );
+
+    const pixelHeight =
+      Number(
+        transformation[5]
+      );
+
+    const originX =
+      Number(
+        transformation[3]
+      );
+
+    const originY =
+      Number(
+        transformation[7]
+      );
+
+    return {
+      minX:
+        boundingBox
+          ? boundingBox[0]
+          : Math.min(
+              originX,
+              originX +
+              pixelWidth *
+              width
+            ),
+
+      minZ:
+        boundingBox
+          ? boundingBox[1]
+          : Math.min(
+              originY,
+              originY +
+              pixelHeight *
+              height
+            ),
+
+      widthM:
+        boundingBox
+          ? boundingBox[2] -
+            boundingBox[0]
+          : Math.abs(
+              pixelWidth
+            ) *
+            width,
+
+      depthM:
+        boundingBox
+          ? boundingBox[3] -
+            boundingBox[1]
+          : Math.abs(
+              pixelHeight
+            ) *
+            height,
+
+      reverseRows:
+        pixelHeight < 0,
+
+      reverseColumns:
+        pixelWidth < 0,
+
+      hasGeoreferencing:
+        true
+    };
+  }
+
+
+  return {
+    minX: 0,
+    minZ: 0,
+    widthM: width,
+    depthM: height,
+    reverseRows: true,
+    reverseColumns: false,
+    hasGeoreferencing: false
+  };
+}
+
+
+async function loadGeoTiffRaster(
+  file,
+  worldFile
+) {
+  const buffer =
+    await file.arrayBuffer();
+
+  const tiff =
+    await fromGeoTiffArrayBuffer(
+      buffer
+    );
+
+  const image =
+    await tiff.getImage();
+
+  const originalWidth =
+    image.getWidth();
+
+  const originalHeight =
+    image.getHeight();
+
+  const readWidth =
+    Math.max(
+      2,
+      Math.min(
+        originalWidth,
+        MAX_IMPORTED_RASTER_SIZE
+      )
+    );
+
+  const readHeight =
+    Math.max(
+      2,
+      Math.min(
+        originalHeight,
+        MAX_IMPORTED_RASTER_SIZE
+      )
+    );
+
+  const rasterResult =
+    await image.readRasters({
+      samples: [0],
+      interleave: false,
+      width: readWidth,
+      height: readHeight,
+      resampleMethod: "bilinear"
+    });
+
+  const values =
+    Array.isArray(
+      rasterResult
+    )
+      ? rasterResult[0]
+      : rasterResult;
+
+  let info =
+    getGeoTiffRasterInfo(
+      image,
+      originalWidth,
+      originalHeight
+    );
+
+  if (
+    !info.hasGeoreferencing &&
+    worldFile
+  ) {
+    const worldInfo =
+      parseWorldFile(
+        await worldFile.text(),
+        originalWidth,
+        originalHeight
+      );
+
+    info = {
+      ...worldInfo,
+      hasGeoreferencing: true
+    };
+  }
+
+
+  return makeRasterSource({
+    values,
+    gridWidth: readWidth,
+    gridHeight: readHeight,
+    minX: info.minX,
+    minZ: info.minZ,
+    widthM: info.widthM,
+    depthM: info.depthM,
+    nodata:
+      getGeoTiffNoData(
+        image
+      ),
+    reverseRows:
+      info.reverseRows,
+    reverseColumns:
+      info.reverseColumns
+  });
+}
+
+
+function buildImportedRasterTerrain() {
+  if (
+    !rawRasterTerrain
+  ) {
+    return;
+  }
+
+  try {
+    setStatus(
+      "SAMPLING RASTER TERRAIN"
+    );
+
+    const resolution =
+      Math.round(
+        numberValue(
+          "terrainResolution"
+        )
+      );
+
+    const terrain =
+      resampleRasterTerrain(
+        rawRasterTerrain,
+        resolution
+      );
+
+    applyTerrainData(
+      terrain,
+      currentTerrainName
+    );
+  } catch (error) {
+    console.error(error);
+
+    setStatus(
+      "RASTER ERROR"
+    );
+
+    alert(
+      `Could not convert this raster into a terrain heightfield.\n\n${error.message}`
+    );
+  }
+}
+
+
+/* =========================================================
    MODEL IMPORT
 ========================================================= */
 
@@ -2043,6 +3563,10 @@ function rebuildUploadedTerrainIfAvailable() {
     rawTriangles.length > 0
   ) {
     buildUploadedTerrain();
+  } else if (
+    rawRasterTerrain
+  ) {
+    buildImportedRasterTerrain();
   }
 }
 
@@ -6389,10 +7913,6 @@ function smoothWatershedLoop(
     );
 
 
-  /*
-   * Three-point interpolation,
-   * repeated three times.
-   */
   for (
     let pass = 0;
     pass < 3;
@@ -6673,52 +8193,58 @@ function buildFlowBlockedCells(
   const blocked =
     new Set();
 
+  /*
+   * Only block the sink and its immediate
+   * neighbourhood. The previous version
+   * blocked every cell in every basin,
+   * which could remove almost all possible
+   * flowline starting points.
+   */
   state.basinDefinitions.forEach(
     (basin) => {
-      basin.cells.forEach(
-        (index) => {
+      const sinkIndex =
+        basin.sinkIndex;
+
+      const sinkX =
+        sinkIndex %
+        state.resolution;
+
+      const sinkZ =
+        Math.floor(
+          sinkIndex /
+          state.resolution
+        );
+
+      for (
+        let dz = -1;
+        dz <= 1;
+        dz++
+      ) {
+        for (
+          let dx = -1;
+          dx <= 1;
+          dx++
+        ) {
           const x =
-            index %
-            state.resolution;
+            sinkX + dx;
 
           const z =
-            Math.floor(
-              index /
-              state.resolution
-            );
+            sinkZ + dz;
 
-          for (
-            let dz = -1;
-            dz <= 1;
-            dz++
+          if (
+            x < 0 ||
+            x >= state.resolution ||
+            z < 0 ||
+            z >= state.resolution
           ) {
-            for (
-              let dx = -1;
-              dx <= 1;
-              dx++
-            ) {
-              const nx =
-                x + dx;
-
-              const nz =
-                z + dz;
-
-              if (
-                nx < 0 ||
-                nx >= state.resolution ||
-                nz < 0 ||
-                nz >= state.resolution
-              ) {
-                continue;
-              }
-
-              blocked.add(
-                `${nx}:${nz}`
-              );
-            }
+            continue;
           }
+
+          blocked.add(
+            `${x}:${z}`
+          );
         }
-      );
+      }
     }
   );
 
@@ -7288,8 +8814,20 @@ function integrateFlowPath(
   const points =
     [];
 
+  /*
+   * The old implementation stopped when the
+   * path revisited the same raster cell.
+   * Because the integration step is smaller
+   * than one cell, that stopped every path
+   * after roughly one step.
+   *
+   * We now allow several sub-cell samples and
+   * stop only when a cell is occupied for too
+   * long, while the geometric loop detector
+   * still prevents actual loops.
+   */
   const visitedCells =
-    new Set();
+    new Map();
 
   const direction =
     new THREE.Vector2();
@@ -7379,17 +8917,20 @@ function integrateFlowPath(
     const cellKey =
       `${cellX}:${cellZ}`;
 
+    const cellVisits =
+      visitedCells.get(
+        cellKey
+      ) || 0;
 
     if (
-      visitedCells.has(
-        cellKey
-      )
+      cellVisits >= 12
     ) {
       break;
     }
 
-    visitedCells.add(
-      cellKey
+    visitedCells.set(
+      cellKey,
+      cellVisits + 1
     );
 
 
@@ -7578,11 +9119,6 @@ function smoothFlowPath(
     );
 
 
-  /*
-   * Chaikin smoothing avoids the
-   * overshoot produced by Catmull-Rom
-   * interpolation.
-   */
   for (
     let pass = 0;
     pass < 2;
@@ -8875,36 +10411,303 @@ function collectTrianglesFromObject(
 }
 
 
-async function loadModelFile(
-  file
+function getFileExtension(
+  filename
 ) {
-  const extension =
-    file.name
-      .toLowerCase()
-      .split(".")
-      .pop();
+  return filename
+    .toLowerCase()
+    .split(".")
+    .pop();
+}
 
-  if (
-    ![
-      "ply",
-      "stl",
-      "obj"
-    ].includes(
-      extension
-    )
-  ) {
+
+function isPrimaryTerrainExtension(
+  extension
+) {
+  return [
+    "ply",
+    "stl",
+    "obj",
+    "tif",
+    "tiff",
+    "xyz",
+    "txt",
+    "asc"
+  ].includes(
+    extension
+  );
+}
+
+
+function findWorldFile(
+  primaryFile,
+  companionFiles
+) {
+  const baseName =
+    primaryFile.name
+      .replace(
+        /\.[^/.]+$/,
+        ""
+      )
+      .toLowerCase();
+
+  return companionFiles.find(
+    (file) => {
+      const extension =
+        getFileExtension(
+          file.name
+        );
+
+      const fileBaseName =
+        file.name
+          .replace(
+            /\.[^/.]+$/,
+            ""
+          )
+          .toLowerCase();
+
+      return (
+        extension === "tfw" &&
+        fileBaseName === baseName
+      );
+    }
+  ) || null;
+}
+
+
+async function loadTerrainFiles(
+  files
+) {
+  const primaryFile =
+    files.find(
+      (file) =>
+        isPrimaryTerrainExtension(
+          getFileExtension(
+            file.name
+          )
+        )
+    );
+
+  if (!primaryFile) {
     alert(
-      "Please upload a PLY, STL or OBJ file."
+      "Please upload a PLY, STL, OBJ, GeoTIFF, XYZ or ESRI ASCII Grid file."
     );
 
     return;
   }
 
+  await loadModelFile(
+    primaryFile,
+    files
+  );
+}
+
+
+async function loadModelFile(
+  file,
+  companionFiles = []
+) {
+  const extension =
+    getFileExtension(
+      file.name
+    );
 
   try {
     setStatus(
-      "LOADING MODEL"
+      "LOADING TERRAIN"
     );
+
+
+    if (
+      extension === "tif" ||
+      extension === "tiff"
+    ) {
+      rawRasterTerrain =
+        await loadGeoTiffRaster(
+          file,
+          findWorldFile(
+            file,
+            companionFiles
+          )
+        );
+
+      rawTriangles =
+        null;
+
+      proceduralSeed =
+        null;
+
+      currentTerrainName =
+        file.name.replace(
+          /\.[^/.]+$/,
+          ""
+        );
+
+      if ($("designName")) {
+        $("designName").value =
+          currentTerrainName;
+      }
+
+      buildImportedRasterTerrain();
+
+      setStatus(
+        "READY"
+      );
+
+      return;
+    }
+
+
+    if (
+      extension === "xyz"
+    ) {
+      rawRasterTerrain =
+        parseXYZRaster(
+          await file.text()
+        );
+
+      rawTriangles =
+        null;
+
+      proceduralSeed =
+        null;
+
+      currentTerrainName =
+        file.name.replace(
+          /\.[^/.]+$/,
+          ""
+        );
+
+      if ($("designName")) {
+        $("designName").value =
+          currentTerrainName;
+      }
+
+      buildImportedRasterTerrain();
+
+      setStatus(
+        "READY"
+      );
+
+      return;
+    }
+
+
+    if (
+      extension === "asc"
+    ) {
+      rawRasterTerrain =
+        parseEsriAsciiGrid(
+          await file.text()
+        );
+
+      rawTriangles =
+        null;
+
+      proceduralSeed =
+        null;
+
+      currentTerrainName =
+        file.name.replace(
+          /\.[^/.]+$/,
+          ""
+        );
+
+      if ($("designName")) {
+        $("designName").value =
+          currentTerrainName;
+      }
+
+      buildImportedRasterTerrain();
+
+      setStatus(
+        "READY"
+      );
+
+      return;
+    }
+
+
+    if (
+      extension === "txt"
+    ) {
+      const text =
+        await file.text();
+
+      const firstLines =
+        text
+          .split(
+            /\r?\n/
+          )
+          .slice(
+            0,
+            10
+          )
+          .join(
+            "\n"
+          )
+          .toLowerCase();
+
+      if (
+        firstLines.includes(
+          "ncols"
+        ) &&
+        firstLines.includes(
+          "nrows"
+        )
+      ) {
+        rawRasterTerrain =
+          parseEsriAsciiGrid(
+            text
+          );
+      } else {
+        rawRasterTerrain =
+          parseXYZRaster(
+            text
+          );
+      }
+
+      rawTriangles =
+        null;
+
+      proceduralSeed =
+        null;
+
+      currentTerrainName =
+        file.name.replace(
+          /\.[^/.]+$/,
+          ""
+        );
+
+      if ($("designName")) {
+        $("designName").value =
+          currentTerrainName;
+      }
+
+      buildImportedRasterTerrain();
+
+      setStatus(
+        "READY"
+      );
+
+      return;
+    }
+
+
+    if (
+      ![
+        "ply",
+        "stl",
+        "obj"
+      ].includes(
+        extension
+      )
+    ) {
+      throw new Error(
+        "Unsupported file type."
+      );
+    }
+
 
     let object;
 
@@ -8947,6 +10750,9 @@ async function loadModelFile(
         object
       );
 
+    rawRasterTerrain =
+      null;
+
     if (
       rawTriangles.length ===
       0
@@ -8979,11 +10785,11 @@ async function loadModelFile(
     console.error(error);
 
     setStatus(
-      "MODEL ERROR"
+      "TERRAIN ERROR"
     );
 
     alert(
-      `Could not load the model.\n\n${error.message}`
+      `Could not load the terrain file.\n\n${error.message}`
     );
   }
 }

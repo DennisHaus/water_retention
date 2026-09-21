@@ -44,8 +44,8 @@
         </h1>
 
         <p class="description">
-          A simplified topography-based model for visualising how rainfall
-          moves across a terrain and is retained in depressions, basins and
+          A simplified topography-based model for visualising rainfall,
+          surface flow, runoff and water retention in depressions and behind
           artificial dams.
 
           <br><br>
@@ -59,33 +59,34 @@
           <div class="description-content">
 
             <section>
-              <strong>INPUT</strong>
+              <strong>RAINFALL</strong>
 
-              Rainfall is entered as litres per square metre. One litre per
-              square metre is equivalent to one millimetre of rainfall.
-            </section>
-
-            <section>
-              <strong>TOPOGRAPHY</strong>
-
-              Uploaded PLY, STL and OBJ models are sampled into a regular
-              heightfield. Each horizontal cell has one terrain elevation.
+              Rainfall is applied uniformly over the entire projected
+              topographic area. One litre per square metre equals one
+              millimetre of rainfall.
             </section>
 
             <section>
               <strong>SURFACE FLOW</strong>
 
-              Water follows the steepest downhill neighbouring cell. The blue
-              traces and moving particles show the approximate surface-flow
-              direction.
+              Each terrain cell routes water to its steepest downhill
+              neighbouring cell. Water either reaches an interior depression
+              or leaves through the terrain boundary.
             </section>
 
             <section>
               <strong>RETENTION</strong>
 
-              Rainfall is treated as surface water that collects in
-              depressions. Each depression fills until its lowest spill point.
-              Water that cannot be retained is counted as runoff or spill.
+              Rainfall entering an interior depression is retained until the
+              depression reaches its lowest spill elevation. Additional water
+              becomes runoff or spill.
+            </section>
+
+            <section>
+              <strong>TOPOGRAPHY</strong>
+
+              PLY, STL and OBJ models are sampled into a regular heightfield.
+              Each horizontal cell has one terrain elevation.
             </section>
 
             <section>
@@ -97,20 +98,11 @@
             </section>
 
             <section>
-              <strong>UPLOADED DAMS</strong>
-
-              Artificial dams must be represented in the uploaded topography.
-              Very narrow dams may disappear if the terrain resolution is too
-              low.
-            </section>
-
-            <section>
               <strong>EXPORT</strong>
 
-              PLY and STL exports contain a triangulated surface mesh of the
+              PLY and STL exports contain a triangulated mesh representing the
               currently retained water volume. The exported geometry uses
-              physical model units and does not include visual vertical
-              exaggeration.
+              physical model units and excludes visual vertical exaggeration.
             </section>
 
           </div>
@@ -160,7 +152,7 @@
               >
 
               <div class="control-note">
-                1 L/m² = 1 mm rainfall
+                1 L/m² = 1 mm rainfall over the full model area
               </div>
             </div>
 
@@ -224,7 +216,7 @@
             <div class="control">
               <div class="label-row">
                 <label for="showFlow">
-                  SHOW SURFACE FLOW
+                  SHOW RAINFALL / FLOW
                 </label>
 
                 <input
@@ -239,7 +231,7 @@
             <div class="control">
               <div class="label-row">
                 <label for="showWaterLabels">
-                  SHOW WATER LABELS
+                  SHOW BASIN LABELS
                 </label>
 
                 <input
@@ -251,7 +243,7 @@
             </div>
 
             <div class="flow-legend">
-              BLUE TRACES = APPROXIMATE DOWNHILL FLOW
+              BLUE = FLOW TO BASINS · AMBER = RUNOFF TO BOUNDARY
             </div>
 
           </div>
@@ -575,8 +567,9 @@
             </button>
 
             <div class="control-note">
-              Exports the currently visible retained water volume. The
-              geometry uses physical model units, not visual exaggeration.
+              Export the currently visible retained-water volume. Allow
+              rainfall animation to finish before exporting the complete
+              rainfall result.
             </div>
 
           </div>
@@ -632,7 +625,7 @@
       <section id="waterReadout" class="water-readout">
 
         <div class="readout-heading">
-          CURRENT RETENTION
+          CURRENT WATER BALANCE
         </div>
 
         <div class="metric-grid">
@@ -668,7 +661,7 @@
           </div>
 
           <div class="metric">
-            <span>WATER LEVEL</span>
+            <span>MAX WATER LEVEL</span>
             <strong id="waterLevelReadout">—</strong>
           </div>
 
@@ -718,8 +711,8 @@
 
 
       <div id="sourceHint">
-        Uploaded models are sampled as regular heightfields.
-        Model scale and units affect calculated volumes.
+        Uploaded models are sampled as regular heightfields. Their boundary
+        acts as an open drainage boundary.
       </div>
 
 
